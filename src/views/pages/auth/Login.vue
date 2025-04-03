@@ -41,8 +41,8 @@ const handleLogin = () => {
 	const numericPhone = parseInt(phone.value.replace(/\D/g, ''))
 
 	login({
-		phone: numericPhone,
-		password: password.value,
+		phone: 89999999999,
+		password: '123admin',
 	})
 }
 </script>

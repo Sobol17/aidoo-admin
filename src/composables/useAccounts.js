@@ -1,20 +1,40 @@
 import {
 	createAccount,
+	deleteAccount,
 	getAccountById,
 	getList,
 	updateAccount,
 } from '@/api/accounts'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useProfileStore } from '@/stores/profile'
+import { formatDate } from '@/utils/formatDate'
+import {
+	keepPreviousData,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from '@tanstack/vue-query'
 
-export function useAccounts() {
-	const queryClient = useQueryClient()
-
+export function useAccounts(search = '', page = 1, limit = 1000) {
+	const profileStore = useProfileStore()
 	return useQuery({
 		queryKey: ['accounts'],
-		queryFn: getList,
-		staleTime: 1000 * 60 * 5,
-		onSuccess: res => {
-			queryClient.invalidateQueries(['accounts'])
+		queryFn: () => getList(search, page, limit, profileStore.profileID),
+		placeholderData: keepPreviousData,
+		staleTime: 5 * 60 * 1000, // 5 минут в миллисекундах
+		cacheTime: 5 * 60 * 1000, // 5 минут в миллисекундах
+		select: data => {
+			if (data && data.documents && data.documents.length > 0) {
+				const accounts = data.documents
+				return accounts.map(account => ({
+					password: account.password,
+					phone: account.phone,
+					createdAt: formatDate(account.created_at),
+					updatedAt: formatDate(account.updated_at),
+					id: account._id,
+					creatorID: account.creator_id,
+				}))
+			}
+			return null
 		},
 	})
 }
@@ -27,23 +47,61 @@ export function useAccountById(id) {
 	})
 }
 
-export function useCreateAccount() {
+export function useCreateAccount(options = {}) {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({ account }) => createAccount(account),
-		onSuccess: () => {
-			queryClient.invalidateQueries(['accounts'])
+		mutationFn: accountData => {
+			return createAccount(accountData)
+		},
+		onSuccess: (data, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['accounts'], exact: true })
+
+			if (options.onSuccess) {
+				options.onSuccess(data, variables)
+			}
+		},
+		onError: (error, variables) => {
+			if (options.onError) {
+				options.onError(error, variables)
+			}
 		},
 	})
 }
 
-export function useUpdateAccount() {
+export function useUpdateAccount(options = {}) {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: ({ id, account }) => updateAccount(id, account),
+		mutationFn: ({ id, accountData }) => updateAccount(id, accountData),
+		onSuccess: (data, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['accounts'], exact: true })
+
+			if (options.onSuccess) {
+				options.onSuccess(data, variables)
+			}
+		},
+		onError: (error, variables) => {
+			if (options.onError) {
+				options.onError(error, variables)
+			}
+		},
+	})
+}
+
+export function useDeleteAccount(options = {}) {
+	const queryClient = useQueryClient()
+	const profileStore = useProfileStore()
+	return useMutation({
+		mutationFn: accountId => deleteAccount(accountId, profileStore.profileID),
 		onSuccess: () => {
-			queryClient.invalidateQueries(['accounts'])
-			queryClient.invalidateQueries(['account', id])
+			queryClient.invalidateQueries({ queryKey: ['accounts'], exact: true })
+			if (options.onSuccess) {
+				options.onSuccess()
+			}
+		},
+		onError: (error, variables) => {
+			if (options.onError) {
+				options.onError(error, variables)
+			}
 		},
 	})
 }

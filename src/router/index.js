@@ -1,4 +1,5 @@
 import AppLayout from '@/layout/AppLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -92,14 +93,19 @@ const router = createRouter({
 					component: () => import('@/views/uikit/TimelineDoc.vue'),
 				},
 				{
-					path: '/pages/empty',
-					name: 'empty',
-					component: () => import('@/views/pages/Empty.vue'),
+					path: '/admin-accounts',
+					name: 'admin-accounts',
+					component: () => import('@/views/pages/Accounts.vue'),
 				},
 				{
-					path: '/accounts',
-					name: 'accounts',
+					path: '/user-accounts',
+					name: 'user-accounts',
 					component: () => import('@/views/pages/Accounts.vue'),
+				},
+				{
+					path: '/profile',
+					name: 'profile',
+					component: () => import('@/views/pages/Profile.vue'),
 				},
 				{
 					path: '/documentation',
@@ -127,19 +133,19 @@ const router = createRouter({
 	],
 })
 
-// router.beforeEach((to, from, next) => {
-// 	const authStore = useAuthStore()
-// 	if (authStore.getAccessToken() && to.name === 'login') {
-// 		next({ name: 'dashboard' })
-// 	}
-// 	if (
-// 		!authStore.getAccessToken() &&
-// 		!['login', 'accessDenied'].includes(to.name)
-// 	) {
-// 		next({ name: 'accessDenied' })
-// 	} else {
-// 		next()
-// 	}
-// })
+router.beforeEach((to, from, next) => {
+	const authStore = useAuthStore()
+	if (authStore.getAccessToken() && to.name === 'login') {
+		next({ name: 'dashboard' })
+	}
+	if (
+		!authStore.getAccessToken() &&
+		!['login', 'accessDenied'].includes(to.name)
+	) {
+		next({ name: 'accessDenied' })
+	} else {
+		next()
+	}
+})
 
 export default router
