@@ -10,8 +10,10 @@ export const getList = (search = '', page = 1, limit = 10, profileID = '') => {
 		.then(res => res.data)
 }
 
-export const getAccountById = id =>
-	axiosInst.get(`${API_URL}/${id}`).then(res => res.data)
+export const getAccountById = (id, profileID) =>
+	axiosInst
+		.get(`${API_URL}/${id}?profile_id=${profileID}`)
+		.then(res => res.data)
 
 export const createAccount = data =>
 	axiosInst.post(`${API_URL}`, data).then(res => res.data)

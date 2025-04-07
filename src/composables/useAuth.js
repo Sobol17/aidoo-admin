@@ -15,7 +15,7 @@ export function useMakeAuth() {
 			if (res.access_token) {
 				authStore.setAccessToken(res.access_token)
 				authStore.setRefreshToken(res.refresh_token)
-				router.push({ name: 'dashboard' })
+				window.location.href = '/'
 			}
 		},
 	})

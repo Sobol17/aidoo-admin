@@ -95,12 +95,30 @@ const router = createRouter({
 				{
 					path: '/admin-accounts',
 					name: 'admin-accounts',
-					component: () => import('@/views/pages/Accounts.vue'),
+					component: () => import('@/views/pages/admin-accounts/Accounts.vue'),
+				},
+				{
+					path: '/admin-accounts/:id',
+					name: 'admin-accounts-id',
+					component: () => import('@/views/pages/admin-accounts/Account.vue'),
 				},
 				{
 					path: '/user-accounts',
 					name: 'user-accounts',
-					component: () => import('@/views/pages/Accounts.vue'),
+					component: () =>
+						import('@/views/pages/user-accounts/AccountsUser.vue'),
+				},
+				{
+					path: '/admin-profiles',
+					name: 'admin-profiles',
+					component: () =>
+						import('@/views/pages/admin-profiles/AdminProfiles.vue'),
+				},
+				{
+					path: '/user-profiles',
+					name: 'user-profiles',
+					component: () =>
+						import('@/views/pages/user-profiles/UserProfiles.vue'),
 				},
 				{
 					path: '/profile',

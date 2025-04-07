@@ -30,6 +30,12 @@ const model = ref([
 				to: '/admin-accounts',
 			},
 			{ label: 'Аккаунты(МП)', icon: 'pi pi-fw pi-user', to: '/user-accounts' },
+			{
+				label: 'Профили(ПУ)',
+				icon: 'pi pi-fw pi-users',
+				to: '/admin-profiles',
+			},
+			{ label: 'Профили(МП)', icon: 'pi pi-fw pi-users', to: '/user-profiles' },
 			{ label: 'Категории', icon: 'pi pi-fw pi-home', to: '/' },
 			{ label: 'Объявления', icon: 'pi pi-fw pi-home', to: '/' },
 			{ label: 'Афиша', icon: 'pi pi-fw pi-home', to: '/' },

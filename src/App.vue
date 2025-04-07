@@ -1,7 +1,9 @@
 <script setup>
 import { useProfile } from '@/composables/useProfile'
 
-const { data: profileData, isLoading, error, refetch } = useProfile()
+if (localStorage.getItem('access_token')) {
+	const { data: profileData, isLoading, error, refetch } = useProfile()
+}
 </script>
 
 <template>

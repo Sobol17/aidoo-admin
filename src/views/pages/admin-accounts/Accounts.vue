@@ -4,12 +4,13 @@ import {
 	useCreateAccount,
 	useDeleteAccount,
 	useUpdateAccount,
-} from '@/composables/useAccounts'
+} from '@/composables/useAdminAccounts'
 import { useProfileStore } from '@/stores/profile'
 import { FilterMatchMode } from '@primevue/core/api'
 import { Button } from 'primevue'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const profileStore = useProfileStore()
 
@@ -169,6 +170,12 @@ function generateRandomPassword() {
 	newAccount.value.password = createPassword()
 }
 
+const router = useRouter()
+
+function rowClick(event) {
+	router.push(`/admin-accounts/${event.data.id}`)
+}
+
 // function exportCSV() {
 // 	dt.value.exportCSV()
 // }
@@ -192,6 +199,7 @@ function generateRandomPassword() {
 			<DataTable
 				ref="dt"
 				:value="accounts"
+				stripedRows
 				dataKey="id"
 				:paginator="true"
 				:rows="10"
@@ -199,10 +207,14 @@ function generateRandomPassword() {
 				paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
 				:rowsPerPageOptions="[5, 10, 25]"
 				currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+				@rowClick="rowClick"
+				:rowHover="true"
+				selectionMode="single"
+				:loading="isLoading"
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
-						<h4 class="m-0">Аккаунты</h4>
+						<h4 class="m-0">Аккаунты (ПУ)</h4>
 						<IconField>
 							<InputIcon>
 								<i class="pi pi-search" />
@@ -230,7 +242,6 @@ function generateRandomPassword() {
 				<Column
 					field="password"
 					header="Пароль"
-					sortable
 					style="min-width: 16rem"
 				></Column>
 				<Column
