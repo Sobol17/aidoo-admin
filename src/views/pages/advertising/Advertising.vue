@@ -1,0 +1,515 @@
+<script setup>
+import { useAccounts } from "@/composables/useAdminAccounts";
+import { useProfileStore } from "@/stores/profile";
+import { FilterMatchMode } from "@primevue/core/api";
+import { Button } from "primevue";
+import { useToast } from "primevue/usetoast";
+import { computed, ref } from "vue";
+import {
+  useAdvertising,
+  useCreateAdvertising,
+  useDeleteAdvertising,
+  useUpdateAdvertising,
+} from "@/composables/useAdvertising";
+
+const profileStore = useProfileStore();
+
+const { data: advertisingData, isLoading, error } = useAdvertising("all");
+
+const advertisingElements = computed(() => {
+  return advertisingData?.value || [];
+});
+
+const toast = useToast();
+const dt = ref();
+const advertisingDialog = ref(false);
+const deleteAdvertisingDialog = ref(false);
+
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+});
+
+const profileIdToDelete = ref(null);
+
+const isEdit = ref(false);
+
+const advTypes = ref([
+  { name: "Объявление от Партнера ", code: "offer" },
+  { name: "Ссылка на внешнего Рекламодателя", code: "external" },
+  { name: "Видео реклама", code: "video" },
+]);
+
+const linkTypes = ref([
+  { name: "Внутренняя", code: "internal" },
+  { name: "Внешняя", code: "external" },
+]);
+
+const advStatus = ref([
+  { name: "Реклама активна", code: "actived" },
+  { name: "Реклама отключена", code: "draft" },
+]);
+
+const newAdv = ref({});
+
+const src = ref(null);
+const advFile = ref(null);
+
+function onUpload(e) {
+  advFile.value = e.files[0];
+  src.value = e.files[0].objectURL;
+  toast.add({
+    severity: "info",
+    summary: "Успех",
+    detail: "Файлы загружены",
+    life: 3000,
+  });
+}
+
+const { mutate: createAdv, isPending: isCreatingNewAdv } = useCreateAdvertising(
+  {
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Профиль успешно создан",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось создать профиль",
+        life: 3000,
+      });
+    },
+  },
+);
+
+const { mutate: updateAdv, isPending: isUpdatingProfile } =
+  useUpdateAdvertising({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Профиль успешно обновлен",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось обновить профиль",
+        life: 3000,
+      });
+    },
+  });
+
+const { data: adminAccounts } = useAccounts();
+
+const adminAccountsOptions = computed(() => {
+  return adminAccounts?.value?.map((account) => ({
+    name: account.phone,
+    code: account.id,
+  }));
+});
+
+function saveNewAdv() {
+  submitted.value = true;
+
+  if (isEdit.value) {
+    updateAdv({
+      id: newAdv.value.id,
+      accountData: {
+        profile_id: profileStore.profileID,
+        type: newAdv.value.type.code,
+        link: newAdv.value.link,
+        // file_id: src.value || '',
+        link_type: newAdv.value.linkType.code,
+        number: newAdv.value.number,
+        status: newAdv.value.advStatus,
+      },
+    });
+  } else {
+    const requestFields = {
+      profile_id: profileStore.profileID,
+      type: newAdv.value.type.code,
+      link: newAdv.value.link,
+      file_id: advFile.value || "1",
+      link_type: newAdv.value.linkType.code,
+      number: newAdv.value.number,
+      status: newAdv.value.advStatus.code,
+    };
+    const formData = new FormData();
+    formData.append("profile_id", profileStore.profileID);
+    formData.append("file_id", advFile.value);
+    formData.append("type", newAdv.value.type.code);
+    formData.append("link", newAdv.value.link);
+    formData.append("link_type", newAdv.value.linkType.code);
+    formData.append("number", newAdv.value.number);
+    formData.append("status", newAdv.value.advStatus.code);
+
+    createAdv(formData);
+  }
+}
+
+const submitted = ref(false);
+
+function openNew() {
+  isEdit.value = false;
+  newAdv.value = {};
+  src.value = null;
+  submitted.value = false;
+  advertisingDialog.value = true;
+}
+
+function hideDialog() {
+  advertisingDialog.value = false;
+  deleteAdvertisingDialog.value = false;
+  submitted.value = false;
+}
+
+function editProfile(profileElement) {
+  isEdit.value = true;
+
+  const accountOption = adminAccountsOptions.value?.find(
+    (option) => option.code === profileElement.accountId,
+  );
+
+  let profileTypeCode = "";
+  if (profileElement.profileType === "Администратор") profileTypeCode = "admin";
+  else if (profileElement.profileType === "Модератор")
+    profileTypeCode = "moderator";
+  else if (profileElement.profileType === "Спонсор")
+    profileTypeCode = "supporter";
+  else if (profileElement.profileType === "Сотрудник")
+    profileTypeCode = "employee";
+
+  const profileTypeOption = advTypes.value.find(
+    (option) => option.code === profileTypeCode,
+  ) || { name: profileElement.profileType, code: profileTypeCode };
+
+  newProfile.value = {
+    ...profileElement,
+    accountId: accountOption,
+    profileType: profileTypeOption,
+  };
+
+  advertisingDialog.value = true;
+}
+
+function confirmDeleteProfile(profileElement) {
+  profileIdToDelete.value = profileElement.id;
+  deleteAdvertisingDialog.value = true;
+}
+
+const { mutate: useDeleteProfile, isPending: isDeletingProfile } =
+  useDeleteAdvertising({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Профиль успешно удален",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось удалить профиль",
+        life: 3000,
+      });
+    },
+  });
+
+function deleteProfile() {
+  useDeleteProfile(profileIdToDelete.value);
+}
+
+// function exportCSV() {
+// 	dt.value.exportCSV()
+// }
+</script>
+
+<template>
+  <div>
+    <div class="card">
+      <Toolbar class="mb-6">
+        <template #end>
+          <Button
+            label="Добавить"
+            icon="pi pi-plus"
+            severity="secondary"
+            class="mr-2"
+            @click="openNew"
+          />
+        </template>
+      </Toolbar>
+
+      <DataTable
+        ref="dt"
+        :value="advertisingElements"
+        stripedRows
+        dataKey="id"
+        :paginator="true"
+        :rows="10"
+        :filters="filters"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        :rowsPerPageOptions="[5, 10, 25]"
+        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+      >
+        <template #header>
+          <div class="flex flex-wrap gap-2 items-center justify-between">
+            <h4 class="m-0">Реклама</h4>
+            <IconField>
+              <InputIcon>
+                <i class="pi pi-search" />
+              </InputIcon>
+              <InputText
+                v-model="filters['global'].value"
+                placeholder="Поиск"
+              />
+            </IconField>
+          </div>
+        </template>
+
+        <Column field="fileId" header="Файл" sortable style="min-width: 8rem">
+          <template #body="slotProps">
+            <Avatar
+              v-if="slotProps.data.avatar"
+              :image="slotProps.data.avatar"
+              shape="circle"
+            />
+            <div
+              v-else
+              class="flex items-center justify-center size-10 bg-gray-200 rounded-full"
+            >
+              <i class="pi pi-user" />
+            </div>
+          </template>
+        </Column>
+        <Column
+          field="type"
+          header="Тип рекламы"
+          sortable
+          style="min-width: 12rem"
+        ></Column>
+        <Column
+          field="link"
+          header="Ссылка"
+          sortable
+          style="min-width: 12rem"
+        ></Column>
+        <Column
+          field="link_type"
+          header="Тип ссылки"
+          sortable
+          style="min-width: 12rem"
+        ></Column>
+        <Column
+          field="number"
+          header="Номер"
+          sortable
+          style="min-width: 8rem"
+        ></Column>
+        <Column
+          field="advStatus"
+          header="Активность"
+          sortable
+          style="min-width: 10rem"
+        ></Column>
+        <Column
+          field="_id"
+          header="Город"
+          sortable
+          style="min-width: 10rem"
+        ></Column>
+        <Column
+          field="id"
+          header="ID профиля"
+          sortable
+          style="min-width: 16rem"
+        ></Column>
+        <Column
+          field="createdAt"
+          header="Дата создания"
+          sortable
+          style="min-width: 12rem"
+        ></Column>
+        <Column :exportable="false" style="min-width: 12rem">
+          <template #body="slotProps">
+            <Button
+              icon="pi pi-pencil"
+              outlined
+              rounded
+              class="mr-2"
+              @click="editProfile(slotProps.data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              outlined
+              rounded
+              severity="danger"
+              @click="confirmDeleteProfile(slotProps.data)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+
+    <!-- Диалог для создания нового аккаунта -->
+    <Dialog
+      v-model:visible="advertisingDialog"
+      :style="{ width: '450px' }"
+      :header="isEdit ? 'Редактирование рекламы' : 'Добавление рекламы'"
+      :modal="true"
+    >
+      <div class="flex flex-col gap-6">
+        <div v-if="isEdit">
+          <label for="name" class="block font-bold mb-3">ID</label>
+          <InputText
+            id="id"
+            v-model.trim="newAdv.id"
+            required="true"
+            autofocus
+            :invalid="submitted && !newAdv.id"
+            fluid
+            disabled
+          />
+          <small v-if="submitted && !newAdv.id" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+        <div>
+          <div class="block font-bold mb-3">Файл</div>
+          <FileUpload
+            mode="basic"
+            @select="onUpload"
+            customUpload
+            auto
+            severity="secondary"
+            class="p-button-outlined"
+            chooseLabel="Выбрать"
+          />
+          <img
+            v-if="src"
+            :src="src"
+            alt="Image"
+            class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4"
+          />
+        </div>
+        <div>
+          <div class="block font-bold mb-3">Тип предложения</div>
+          <Select
+            v-model="newAdv.type"
+            :options="advTypes"
+            optionLabel="name"
+            placeholder="Выберите тип предложения"
+            class="w-full"
+            :invalid="submitted && !newAdv.type"
+          />
+          <small v-if="submitted && !newAdv.type" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+        <div>
+          <div class="block font-bold mb-3">Тип ссылки</div>
+          <Select
+            v-model="newAdv.linkType"
+            :options="linkTypes"
+            optionLabel="name"
+            placeholder="Выберите тип ссылки"
+            class="w-full"
+            :invalid="submitted && !newAdv.linkType"
+          />
+          <small v-if="submitted && !newAdv.linkType" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+        <div>
+          <label for="firstName" class="block font-bold mb-3">Ссылка</label>
+          <InputText
+            id="firstName"
+            v-model.trim="newAdv.link"
+            required="true"
+            autofocus
+            :invalid="submitted && !newAdv.link"
+            fluid
+          />
+          <small v-if="submitted && !newAdv.link" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+        <div>
+          <label for="name" class="block font-bold mb-3">Номер</label>
+          <InputText
+            id="phone"
+            v-model.trim="newAdv.number"
+            required="true"
+            autofocus
+            :invalid="submitted && !newAdv.number"
+            fluid
+          />
+          <small v-if="submitted && !newAdv.number" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+        <div>
+          <div class="block font-bold mb-3">Активность</div>
+          <Select
+            v-model="newAdv.advStatus"
+            :options="advStatus"
+            optionLabel="name"
+            placeholder="Активность"
+            class="w-full"
+            :invalid="submitted && !newAdv.advStatus"
+          />
+          <small v-if="submitted && !newAdv.advStatus" class="text-red-500"
+            >Обязательное поле</small
+          >
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
+        <Button
+          label="Сохранить"
+          icon="pi pi-check"
+          @click="saveNewAdv"
+          :loading="isCreatingNewAdv"
+        />
+      </template>
+    </Dialog>
+
+    <Dialog
+      v-model:visible="deleteAdvertisingDialog"
+      :style="{ width: '450px' }"
+      header="Подтверждение"
+      :modal="true"
+    >
+      <div class="flex items-center gap-4">
+        <i class="pi pi-exclamation-triangle !text-3xl" />
+        Вы уверены, что хотите удалить профиль c id {{ profileIdToDelete }}?
+      </div>
+      <template #footer>
+        <Button
+          label="Нет"
+          icon="pi pi-times"
+          text
+          @click="deleteAdvertisingDialog = false"
+        />
+        <Button
+          label="Да"
+          icon="pi pi-check"
+          @click="deleteProfile"
+          :loading="isDeletingProfile"
+        />
+      </template>
+    </Dialog>
+  </div>
+</template>
