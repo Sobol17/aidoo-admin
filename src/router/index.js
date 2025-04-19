@@ -3,9 +3,8 @@ import { useAuthStore } from "@/stores/auth";
 import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
-  history: createWebHistory(
-    process.env.NODE_ENV === "production" ? "/aidoo-admin/" : "/",
-  ),
+  history: createWebHistory("/aidoo-admin/"),
+  // history: createWebHistory('/'),
   routes: [
     {
       path: "/",
