@@ -1,5 +1,8 @@
 <script setup>
-import { useUserProfiles } from "@/composables/useUserProfiles";
+import {
+  useModerateUserProfiles,
+  useUserProfiles,
+} from "@/composables/useUserProfiles";
 import { useProfileStore } from "@/stores/profile";
 import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
@@ -27,9 +30,8 @@ const filters = ref({
 });
 
 const statusOptions = ref([
-  { name: "Активный", code: "active" },
-  { name: "Неактивный", code: "inactive" },
-  { name: "Заблокирован", code: "blocked" },
+  { name: "Активный", code: "actived" },
+  { name: "Заблокирован", code: "rejected" },
 ]);
 
 const newProfile = ref({
@@ -41,18 +43,37 @@ const newProfile = ref({
   profileType: "",
 });
 
+const { mutate: moderateProfile, isPending: moderationPending } =
+  useModerateUserProfiles({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Информация о профиле изменена",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось изменить информацию о профиле",
+        life: 3000,
+      });
+    },
+  });
+
 function saveNewProfile() {
   submitted.value = true;
 
-  createProfile({
-    profile_id: profileStore.profileID,
-    phone: numericPhone.value,
-    profile_type: newProfile.value.profileType.code,
-    account_id: newProfile.value.accountId.code,
-    // avatar_id: src.value || '',
-    first_name: newProfile.value.firstName,
-    last_name: newProfile.value.lastName,
-    city: newProfile.value.city,
+  moderateProfile({
+    id: newProfile.value.id,
+    moderationData: {
+      profile_id: profileStore.profileID,
+      status: newProfile.value.status.code,
+      moderation_comment: newProfile.value.comment,
+    },
   });
 }
 
@@ -66,6 +87,7 @@ function openNew(event) {
     city: "",
     accountId: event.data.accountId,
     profileType: "",
+    id: event.data.id,
   };
   submitted.value = false;
   profileDialog.value = true;
@@ -283,8 +305,9 @@ const expandedRows = ref([]);
             class="w-full"
             :invalid="submitted && !newProfile.comment"
           />
+          <p class="text-right">{{ newProfile.comment?.length }} / 30</p>
           <small v-if="submitted && !newProfile.comment" class="text-red-500"
-            >Обязательное поле</small
+            >Обязательное поле. Минимум 30 символов</small
           >
         </div>
       </div>

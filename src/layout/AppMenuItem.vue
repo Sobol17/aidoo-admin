@@ -114,8 +114,8 @@ function checkActiveRoute(item) {
       tabindex="0"
       :to="item.to"
     >
-      <img class="mr-3" v-if="item.iconSrc" :src="item.iconSrc" alt="" />
-      <i v-else :class="item.icon" class="layout-menuitem-icon"></i>
+      <!--      <img class="mr-3" v-if="item.iconSrc" :src="item.iconSrc" alt="" />-->
+      <i :class="item.icon" class="layout-menuitem-icon"></i>
       <span class="layout-menuitem-text">{{ item.label }}</span>
       <i
         class="pi pi-fw pi-angle-down layout-submenu-toggler"

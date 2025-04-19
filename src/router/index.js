@@ -1,6 +1,38 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import { useAuthStore } from "@/stores/auth";
 import { createRouter, createWebHistory } from "vue-router";
+import Dashboard from "@/views/Dashboard.vue";
+import FormLayout from "@/views/uikit/FormLayout.vue";
+import InputDoc from "@/views/uikit/InputDoc.vue";
+import ButtonDoc from "@/views/uikit/ButtonDoc.vue";
+import TableDoc from "@/views/uikit/TableDoc.vue";
+import ListDoc from "@/views/uikit/ListDoc.vue";
+import TreeDoc from "@/views/uikit/TreeDoc.vue";
+import PanelsDoc from "@/views/uikit/PanelsDoc.vue";
+import OverlayDoc from "@/views/uikit/OverlayDoc.vue";
+import MediaDoc from "@/views/uikit/MediaDoc.vue";
+import MessagesDoc from "@/views/uikit/MessagesDoc.vue";
+import FileDoc from "@/views/uikit/FileDoc.vue";
+import MenuDoc from "@/views/uikit/MenuDoc.vue";
+import ChartDoc from "@/views/uikit/ChartDoc.vue";
+import MiscDoc from "@/views/uikit/MiscDoc.vue";
+import TimelineDoc from "@/views/uikit/TimelineDoc.vue";
+import Accounts from "@/views/pages/admin-accounts/Accounts.vue";
+import Account from "@/views/pages/admin-accounts/Account.vue";
+import AccountsUser from "@/views/pages/user-accounts/AccountsUser.vue";
+import AdminProfiles from "@/views/pages/admin-profiles/AdminProfiles.vue";
+import UserProfiles from "@/views/pages/user-profiles/UserProfiles.vue";
+import Advertising from "@/views/pages/advertising/Advertising.vue";
+import Offers from "@/views/pages/offers/Offers.vue";
+import Reviews from "@/views/pages/reviews/Reviews.vue";
+import Profile from "@/views/pages/Profile.vue";
+import Subcategory from "@/views/pages/subcategories/Subcategory.vue";
+import Subcategories from "@/views/pages/subcategories/Subcategories.vue";
+import Categories from "@/views/pages/subcategories/Caregories.vue";
+import Documentation from "@/views/pages/Documentation.vue";
+import Login from "@/views/pages/auth/Login.vue";
+import Access from "@/views/pages/auth/Access.vue";
+import Error from "@/views/pages/auth/Error.vue";
 
 const router = createRouter({
   history: createWebHistory("/aidoo-admin/"),
@@ -13,153 +45,148 @@ const router = createRouter({
         {
           path: "/",
           name: "dashboard",
-          component: () => import("@/views/Dashboard.vue"),
+          component: Dashboard,
         },
         {
           path: "/uikit/formlayout",
           name: "formlayout",
-          component: () => import("@/views/uikit/FormLayout.vue"),
+          component: FormLayout,
         },
         {
           path: "/uikit/input",
           name: "input",
-          component: () => import("@/views/uikit/InputDoc.vue"),
+          component: InputDoc,
         },
         {
           path: "/uikit/button",
           name: "button",
-          component: () => import("@/views/uikit/ButtonDoc.vue"),
+          component: ButtonDoc,
         },
         {
           path: "/uikit/table",
           name: "table",
-          component: () => import("@/views/uikit/TableDoc.vue"),
+          component: TableDoc,
         },
         {
           path: "/uikit/list",
           name: "list",
-          component: () => import("@/views/uikit/ListDoc.vue"),
+          component: ListDoc,
         },
         {
           path: "/uikit/tree",
           name: "tree",
-          component: () => import("@/views/uikit/TreeDoc.vue"),
+          component: TreeDoc,
         },
         {
           path: "/uikit/panel",
           name: "panel",
-          component: () => import("@/views/uikit/PanelsDoc.vue"),
+          component: PanelsDoc,
         },
 
         {
           path: "/uikit/overlay",
           name: "overlay",
-          component: () => import("@/views/uikit/OverlayDoc.vue"),
+          component: OverlayDoc,
         },
         {
           path: "/uikit/media",
           name: "media",
-          component: () => import("@/views/uikit/MediaDoc.vue"),
+          component: MediaDoc,
         },
         {
           path: "/uikit/message",
           name: "message",
-          component: () => import("@/views/uikit/MessagesDoc.vue"),
+          component: MessagesDoc,
         },
         {
           path: "/uikit/file",
           name: "file",
-          component: () => import("@/views/uikit/FileDoc.vue"),
+          component: FileDoc,
         },
         {
           path: "/uikit/menu",
           name: "menu",
-          component: () => import("@/views/uikit/MenuDoc.vue"),
+          component: MenuDoc,
         },
         {
           path: "/uikit/charts",
           name: "charts",
-          component: () => import("@/views/uikit/ChartDoc.vue"),
+          component: ChartDoc,
         },
         {
           path: "/uikit/misc",
           name: "misc",
-          component: () => import("@/views/uikit/MiscDoc.vue"),
+          component: MiscDoc,
         },
         {
           path: "/uikit/timeline",
           name: "timeline",
-          component: () => import("@/views/uikit/TimelineDoc.vue"),
+          component: TimelineDoc,
         },
         {
           path: "/admin-accounts",
           name: "admin-accounts",
-          component: () => import("@/views/pages/admin-accounts/Accounts.vue"),
+          component: Accounts,
         },
         {
           path: "/admin-accounts/:id",
           name: "admin-accounts-id",
-          component: () => import("@/views/pages/admin-accounts/Account.vue"),
+          component: Account,
         },
         {
           path: "/user-accounts",
           name: "user-accounts",
-          component: () =>
-            import("@/views/pages/user-accounts/AccountsUser.vue"),
+          component: AccountsUser,
         },
         {
           path: "/admin-profiles",
           name: "admin-profiles",
-          component: () =>
-            import("@/views/pages/admin-profiles/AdminProfiles.vue"),
+          component: AdminProfiles,
         },
         {
           path: "/user-profiles",
           name: "user-profiles",
-          component: () =>
-            import("@/views/pages/user-profiles/UserProfiles.vue"),
+          component: UserProfiles,
         },
         {
           path: "/advertising",
           name: "advertising",
-          component: () => import("@/views/pages/advertising/Advertising.vue"),
+          component: Advertising,
         },
         {
           path: "/offers",
           name: "offers",
-          component: () => import("@/views/pages/offers/Offers.vue"),
+          component: Offers,
         },
         {
           path: "/reviews",
           name: "reviews",
-          component: () => import("@/views/pages/reviews/Reviews.vue"),
+          component: Reviews,
         },
         {
           path: "/profile",
           name: "profile",
-          component: () => import("@/views/pages/Profile.vue"),
+          component: Profile,
         },
         {
           path: "/documentation",
           name: "documentation",
-          component: () => import("@/views/pages/Documentation.vue"),
+          component: Documentation,
         },
         {
           path: "/categories",
           name: "categories",
-          component: () => import("@/views/pages/subcategories/Caregories.vue"),
+          component: Categories,
         },
         {
           path: "/categories/:id",
           name: "category-id",
-          component: () =>
-            import("@/views/pages/subcategories/Subcategories.vue"),
+          component: Subcategories,
         },
         {
           path: "/categories/:id/:subcategory",
           name: "subcategory-id",
-          component: () =>
-            import("@/views/pages/subcategories/Subcategory.vue"),
+          component: Subcategory,
         },
       ],
     },
@@ -167,17 +194,17 @@ const router = createRouter({
     {
       path: "/auth/login",
       name: "login",
-      component: () => import("@/views/pages/auth/Login.vue"),
+      component: Login,
     },
     {
       path: "/auth/access",
       name: "accessDenied",
-      component: () => import("@/views/pages/auth/Access.vue"),
+      component: Access,
     },
     {
       path: "/auth/error",
       name: "error",
-      component: () => import("@/views/pages/auth/Error.vue"),
+      component: Error,
     },
   ],
 });

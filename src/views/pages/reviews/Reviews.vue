@@ -282,7 +282,7 @@ const expandedRows = ref([]);
               reviewItem.comment.length >= 30
             "
           />
-          <p class="text-right">{{ reviewItem.comment.length }} / 30</p>
+          <p class="text-right">{{ reviewItem.comment?.length }} / 30</p>
           <small v-if="submitted && !reviewItem.comment" class="text-red-500"
             >Обязательное поле. Минимум 30 символов</small
           >
