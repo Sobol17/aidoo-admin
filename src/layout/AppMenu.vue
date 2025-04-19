@@ -7,18 +7,17 @@ const model = ref([
   {
     label: "Основные функции",
     items: [
-      { label: "Оформить нарушение", icon: "pi pi-fw pi-home", to: "/" },
+      { label: "Оформить нарушение", icon: "pi pi-fw pi-home", to: "/report" },
       {
         label: "Управление МП",
         icon: "pi pi-fw pi-home",
-        to: "/",
+        to: "/management",
       },
       {
         label: "Контроль платежей",
         icon: "pi pi-fw pi-home",
-        to: "/",
+        to: "/payments",
       },
-      { label: "Реклама", icon: "pi pi-fw pi-home", to: "/" },
     ],
   },
   {
@@ -26,24 +25,30 @@ const model = ref([
     items: [
       {
         label: "Аккаунты(ПУ)",
-        icon: "pi pi-fw pi-user",
+        icon: "pi pi-fw pi-user-edit",
+        iconSrc: "/demo/images/setting.png",
         to: "/admin-accounts",
       },
       { label: "Аккаунты(МП)", icon: "pi pi-fw pi-user", to: "/user-accounts" },
       {
         label: "Профили(ПУ)",
-        icon: "pi pi-fw pi-users",
+        icon: "pi pi-fw pi-user-edit",
+        iconSrc: "/demo/images/setting.png",
         to: "/admin-profiles",
       },
-      { label: "Профили(МП)", icon: "pi pi-fw pi-users", to: "/user-profiles" },
-      { label: "Категории", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Объявления", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Афиша", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Контент", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Жалобы", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Чаты", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Поддержка", icon: "pi pi-fw pi-home", to: "/" },
-      { label: "Реклама", icon: "pi pi-fw pi-home", to: "/advertising" },
+      { label: "Профили(МП)", icon: "pi pi-fw pi-user", to: "/user-profiles" },
+      { label: "Категории", icon: "pi pi-fw pi-th-large", to: "/categories" },
+      {
+        label: "Реклама",
+        icon: "pi pi-fw pi-calendar-plus",
+        to: "/advertising",
+      },
+      { label: "Предложения", icon: "pi pi-fw pi-receipt", to: "/offers" },
+      { label: "Отзывы", icon: "pi pi-fw pi-file-edit", to: "/reviews" },
+      { label: "Контент", icon: "pi pi-fw pi-home", to: "/content" },
+      { label: "Жалобы", icon: "pi pi-fw pi-home", to: "/complaints" },
+      { label: "Чаты", icon: "pi pi-fw pi-home", to: "/chats" },
+      { label: "Поддержка", icon: "pi pi-fw pi-home", to: "/support" },
     ],
   },
 ]);

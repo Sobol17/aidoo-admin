@@ -126,6 +126,16 @@ const router = createRouter({
           component: () => import("@/views/pages/advertising/Advertising.vue"),
         },
         {
+          path: "/offers",
+          name: "offers",
+          component: () => import("@/views/pages/offers/Offers.vue"),
+        },
+        {
+          path: "/reviews",
+          name: "reviews",
+          component: () => import("@/views/pages/reviews/Reviews.vue"),
+        },
+        {
           path: "/profile",
           name: "profile",
           component: () => import("@/views/pages/Profile.vue"),
@@ -134,6 +144,23 @@ const router = createRouter({
           path: "/documentation",
           name: "documentation",
           component: () => import("@/views/pages/Documentation.vue"),
+        },
+        {
+          path: "/categories",
+          name: "categories",
+          component: () => import("@/views/pages/subcategories/Caregories.vue"),
+        },
+        {
+          path: "/categories/:id",
+          name: "category-id",
+          component: () =>
+            import("@/views/pages/subcategories/Subcategories.vue"),
+        },
+        {
+          path: "/categories/:id/:subcategory",
+          name: "subcategory-id",
+          component: () =>
+            import("@/views/pages/subcategories/Subcategory.vue"),
         },
       ],
     },

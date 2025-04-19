@@ -14,7 +14,31 @@ import {
 } from "@tanstack/vue-query";
 
 function transformActiveStatus(status) {
-  return status === "actived" ? "Активна" : "Отключена";
+  return status === "actived" ? "Реклама активна" : "Реклама отключена";
+}
+
+function transformLinkTYpe(linkType) {
+  switch (linkType) {
+    case "internal":
+      return "Внутренняя";
+    case "external":
+      return "Внешняя";
+    default:
+      return linkType;
+  }
+}
+
+function transformOffer(offer) {
+  switch (offer) {
+    case "offer":
+      return "Объявление от Партнера";
+    case "external":
+      return "Ссылка на внешнего Рекламодателя";
+    case "video":
+      return "Видео реклама";
+    default:
+      return offer;
+  }
 }
 
 export function useAdvertising(
@@ -37,11 +61,10 @@ export function useAdvertising(
         return advertising.map((advertising) => ({
           createdAt: formatDate(advertising.created_at),
           updatedAt: formatDate(advertising.updated_at),
-          fileId: advertising.fileId,
-          type: advertising.type,
+          fileId: advertising.file_id,
+          type: transformOffer(advertising.type),
           link: advertising.link,
-          linkType: advertising.link_type,
-          link_type: advertising.ink_type,
+          linkType: transformLinkTYpe(advertising.link_type),
           number: advertising.number,
           advStatus: transformActiveStatus(advertising.status),
           creator: advertising.creator_id,

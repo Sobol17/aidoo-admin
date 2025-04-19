@@ -11,10 +11,15 @@ import {
   useDeleteAdvertising,
   useUpdateAdvertising,
 } from "@/composables/useAdvertising";
+import { useUploadFile } from "@/composables/useFiles";
 
 const profileStore = useProfileStore();
 
-const { data: advertisingData, isLoading, error } = useAdvertising("all");
+const {
+  data: advertisingData,
+  isLoading: isAdvLoading,
+  error,
+} = useAdvertising("all");
 
 const advertisingElements = computed(() => {
   return advertisingData?.value || [];
@@ -29,12 +34,12 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
-const profileIdToDelete = ref(null);
+const advIdToDelete = ref(null);
 
 const isEdit = ref(false);
 
 const advTypes = ref([
-  { name: "Объявление от Партнера ", code: "offer" },
+  { name: "Объявление от Партнера", code: "offer" },
   { name: "Ссылка на внешнего Рекламодателя", code: "external" },
   { name: "Видео реклама", code: "video" },
 ]);
@@ -52,17 +57,33 @@ const advStatus = ref([
 const newAdv = ref({});
 
 const src = ref(null);
-const advFile = ref(null);
+
+const { mutate: uploadFile, isPending: isFileUploading } = useUploadFile({
+  onSuccess: (data) => {
+    toast.add({
+      severity: "success",
+      summary: "Успех",
+      detail: "Файл загружен успешно",
+      life: 3000,
+    });
+    newAdv.value.fileId = data._id;
+  },
+  onError: (error) => {
+    toast.add({
+      severity: "error",
+      summary: "Ошибка",
+      detail: "Не загрузить файл",
+      life: 3000,
+    });
+  },
+});
 
 function onUpload(e) {
-  advFile.value = e.files[0];
   src.value = e.files[0].objectURL;
-  toast.add({
-    severity: "info",
-    summary: "Успех",
-    detail: "Файлы загружены",
-    life: 3000,
-  });
+
+  const formData = new FormData();
+  formData.append("document", e.files[0]);
+  uploadFile(formData);
 }
 
 const { mutate: createAdv, isPending: isCreatingNewAdv } = useCreateAdvertising(
@@ -110,13 +131,6 @@ const { mutate: updateAdv, isPending: isUpdatingProfile } =
 
 const { data: adminAccounts } = useAccounts();
 
-const adminAccountsOptions = computed(() => {
-  return adminAccounts?.value?.map((account) => ({
-    name: account.phone,
-    code: account.id,
-  }));
-});
-
 function saveNewAdv() {
   submitted.value = true;
 
@@ -127,10 +141,10 @@ function saveNewAdv() {
         profile_id: profileStore.profileID,
         type: newAdv.value.type.code,
         link: newAdv.value.link,
-        // file_id: src.value || '',
+        file_id: newAdv.value.fileId,
         link_type: newAdv.value.linkType.code,
         number: newAdv.value.number,
-        status: newAdv.value.advStatus,
+        status: newAdv.value.advStatus.code,
       },
     });
   } else {
@@ -138,21 +152,12 @@ function saveNewAdv() {
       profile_id: profileStore.profileID,
       type: newAdv.value.type.code,
       link: newAdv.value.link,
-      file_id: advFile.value || "1",
       link_type: newAdv.value.linkType.code,
+      file_id: newAdv.value.fileId,
       number: newAdv.value.number,
       status: newAdv.value.advStatus.code,
     };
-    const formData = new FormData();
-    formData.append("profile_id", profileStore.profileID);
-    formData.append("file_id", advFile.value);
-    formData.append("type", newAdv.value.type.code);
-    formData.append("link", newAdv.value.link);
-    formData.append("link_type", newAdv.value.linkType.code);
-    formData.append("number", newAdv.value.number);
-    formData.append("status", newAdv.value.advStatus.code);
-
-    createAdv(formData);
+    createAdv(requestFields);
   }
 }
 
@@ -172,37 +177,35 @@ function hideDialog() {
   submitted.value = false;
 }
 
-function editProfile(profileElement) {
+function editProfile(advElement) {
   isEdit.value = true;
 
-  const accountOption = adminAccountsOptions.value?.find(
-    (option) => option.code === profileElement.accountId,
+  const offerTypeOption = advTypes.value.find(
+    (option) => option.name === advElement.type,
   );
 
-  let profileTypeCode = "";
-  if (profileElement.profileType === "Администратор") profileTypeCode = "admin";
-  else if (profileElement.profileType === "Модератор")
-    profileTypeCode = "moderator";
-  else if (profileElement.profileType === "Спонсор")
-    profileTypeCode = "supporter";
-  else if (profileElement.profileType === "Сотрудник")
-    profileTypeCode = "employee";
+  const linkTypeOption = linkTypes.value.find(
+    (option) => option.name === advElement.linkType,
+  );
 
-  const profileTypeOption = advTypes.value.find(
-    (option) => option.code === profileTypeCode,
-  ) || { name: profileElement.profileType, code: profileTypeCode };
+  const advStatusOptions = advStatus.value.find(
+    (option) => option.name === advElement.advStatus,
+  );
 
-  newProfile.value = {
-    ...profileElement,
-    accountId: accountOption,
-    profileType: profileTypeOption,
+  newAdv.value = {
+    ...advElement,
+    type: offerTypeOption,
+    linkType: linkTypeOption,
+    advStatus: advStatusOptions,
   };
+
+  console.log(newAdv.value);
 
   advertisingDialog.value = true;
 }
 
 function confirmDeleteProfile(profileElement) {
-  profileIdToDelete.value = profileElement.id;
+  advIdToDelete.value = profileElement.id;
   deleteAdvertisingDialog.value = true;
 }
 
@@ -228,7 +231,7 @@ const { mutate: useDeleteProfile, isPending: isDeletingProfile } =
   });
 
 function deleteProfile() {
-  useDeleteProfile(profileIdToDelete.value);
+  useDeleteProfile(advIdToDelete.value);
 }
 
 // function exportCSV() {
@@ -262,6 +265,7 @@ function deleteProfile() {
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[5, 10, 25]"
         currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :loading="isAdvLoading"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -277,12 +281,13 @@ function deleteProfile() {
             </IconField>
           </div>
         </template>
-
         <Column field="fileId" header="Файл" sortable style="min-width: 8rem">
           <template #body="slotProps">
             <Avatar
-              v-if="slotProps.data.avatar"
-              :image="slotProps.data.avatar"
+              v-if="slotProps"
+              :image="
+                'https://aidoo-test.ru/api-admin/files/' + slotProps.data.fileId
+              "
               shape="circle"
             />
             <div
@@ -306,7 +311,7 @@ function deleteProfile() {
           style="min-width: 12rem"
         ></Column>
         <Column
-          field="link_type"
+          field="linkType"
           header="Тип ссылки"
           sortable
           style="min-width: 12rem"
@@ -320,12 +325,6 @@ function deleteProfile() {
         <Column
           field="advStatus"
           header="Активность"
-          sortable
-          style="min-width: 10rem"
-        ></Column>
-        <Column
-          field="_id"
-          header="Город"
           sortable
           style="min-width: 10rem"
         ></Column>
@@ -397,8 +396,12 @@ function deleteProfile() {
             chooseLabel="Выбрать"
           />
           <img
-            v-if="src"
-            :src="src"
+            v-if="
+              src || 'https://aidoo-test.ru/api-admin/files/' + newAdv.fileId
+            "
+            :src="
+              src || 'https://aidoo-test.ru/api-admin/files/' + newAdv.fileId
+            "
             alt="Image"
             class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4"
           />
@@ -494,7 +497,7 @@ function deleteProfile() {
     >
       <div class="flex items-center gap-4">
         <i class="pi pi-exclamation-triangle !text-3xl" />
-        Вы уверены, что хотите удалить профиль c id {{ profileIdToDelete }}?
+        Вы уверены, что хотите удалить рекламу c id {{ advIdToDelete }}?
       </div>
       <template #footer>
         <Button
@@ -513,3 +516,5 @@ function deleteProfile() {
     </Dialog>
   </div>
 </template>
+
+<style scoped></style>

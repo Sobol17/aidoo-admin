@@ -1,26 +1,27 @@
 <script setup>
-import { useUserProfiles } from "@/composables/useUserProfiles";
 import { useProfileStore } from "@/stores/profile";
 import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
+import { useOffers } from "@/composables/userOffers";
 
 const profileStore = useProfileStore();
 
 const {
-  data: profilesData,
+  data: offersData,
   isLoading: isLoadingProfiles,
   error,
-} = useUserProfiles("all");
+} = useOffers("all");
 
-const profiles = computed(() => {
-  return profilesData?.value || [];
+const offers = computed(() => {
+  return offersData?.value || [];
 });
 
 const toast = useToast();
 const dt = ref();
-const profileDialog = ref(false);
+const moderationDialog = ref(false);
+const detailDialog = ref(false);
 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -32,7 +33,7 @@ const statusOptions = ref([
   { name: "Заблокирован", code: "blocked" },
 ]);
 
-const newProfile = ref({
+const offerItem = ref({
   firstName: "",
   lastName: "",
   phone: "",
@@ -47,19 +48,19 @@ function saveNewProfile() {
   createProfile({
     profile_id: profileStore.profileID,
     phone: numericPhone.value,
-    profile_type: newProfile.value.profileType.code,
-    account_id: newProfile.value.accountId.code,
+    profile_type: offerItem.value.profileType.code,
+    account_id: offerItem.value.accountId.code,
     // avatar_id: src.value || '',
-    first_name: newProfile.value.firstName,
-    last_name: newProfile.value.lastName,
-    city: newProfile.value.city,
+    first_name: offerItem.value.firstName,
+    last_name: offerItem.value.lastName,
+    city: offerItem.value.city,
   });
 }
 
 const submitted = ref(false);
 
 function openNew(event) {
-  newProfile.value = {
+  offerItem.value = {
     firstName: "",
     lastName: "",
     phone: "",
@@ -68,28 +69,33 @@ function openNew(event) {
     profileType: "",
   };
   submitted.value = false;
-  profileDialog.value = true;
+  moderationDialog.value = true;
+}
+
+const detailOfferInfo = ref({});
+
+function openDetailDialog(offer) {
+  detailDialog.value = true;
+  detailOfferInfo.value = offer;
 }
 
 function hideDialog() {
-  profileDialog.value = false;
+  moderationDialog.value = false;
+  detailDialog.value = false;
   submitted.value = false;
 }
 
-const expandedRows = ref([]);
-
-// function exportCSV() {
-// 	dt.value.exportCSV()
-// }
+function rowClick(event) {
+  openDetailDialog(event.data);
+}
 </script>
 
 <template>
   <div>
     <div class="card">
       <DataTable
-        v-model:expandedRows="expandedRows"
         ref="dt"
-        :value="profiles"
+        :value="offers"
         stripedRows
         dataKey="id"
         :paginator="true"
@@ -99,11 +105,13 @@ const expandedRows = ref([]);
         :rowsPerPageOptions="[5, 10, 25]"
         currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
         :rowHover="true"
+        @rowClick="rowClick"
+        selectionMode="single"
         :loading="isLoadingProfiles"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Профили (МП)</h4>
+            <h4 class="m-0">Предложения</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -118,73 +126,41 @@ const expandedRows = ref([]);
 
         <Column expander style="width: 5rem" />
 
-        <Column field="avatar" header="Аватар" sortable style="min-width: 8rem">
-          <template #body="slotProps">
-            <Avatar
-              v-if="slotProps.data.avatar"
-              :image="slotProps.data.avatar"
-              shape="circle"
-            />
-            <div
-              v-else
-              class="flex items-center justify-center size-10 bg-gray-200 rounded-full"
-            >
-              <i class="pi pi-user" />
-            </div>
-          </template>
-        </Column>
         <Column
-          field="accountId"
-          header="Аккаунт (ID)"
+          field="ID"
+          header="id"
           sortable
           style="min-width: 12rem"
         ></Column>
         <Column
-          field="creatorId"
-          header="Создатель (ID)"
+          field="title"
+          header="Название"
           sortable
           style="min-width: 12rem"
         ></Column>
         <Column
-          field="phone"
-          header="Телефон"
+          field="description"
+          header="Описание"
           sortable
           style="min-width: 12rem"
         ></Column>
         <Column
-          field="firstName"
-          header="Имя"
+          field="subcategoryId"
+          header="Подкатегория"
+          sortable
+          style="min-width: 12rem"
+        ></Column>
+        <Column
+          field="Стоимость"
+          header="price"
           sortable
           style="min-width: 8rem"
         ></Column>
         <Column
-          field="lastName"
-          header="Фамилия"
-          sortable
-          style="min-width: 10rem"
-        ></Column>
-        <Column
-          field="city"
-          header="Город"
-          sortable
-          style="min-width: 10rem"
-        ></Column>
-        <Column
-          field="status"
+          field="offerStatus"
           header="Статус"
           sortable
           style="min-width: 10rem"
-        ></Column>
-        <Column
-          field="profileType"
-          header="Роль"
-          style="min-width: 10rem"
-        ></Column>
-        <Column
-          field="id"
-          header="ID профиля"
-          sortable
-          style="min-width: 16rem"
         ></Column>
         <Column
           field="createdAt"
@@ -255,7 +231,7 @@ const expandedRows = ref([]);
 
     <!-- Диалог для модерирования профиля -->
     <Dialog
-      v-model:visible="profileDialog"
+      v-model:visible="moderationDialog"
       :style="{ width: '450px' }"
       header="Модерирование профиля (МП)"
       :modal="true"
@@ -264,30 +240,46 @@ const expandedRows = ref([]);
         <div>
           <div class="block font-bold mb-3">Статус профиля</div>
           <Select
-            v-model="newProfile.status"
+            v-model="offerItem.status"
             :options="statusOptions"
             optionLabel="name"
             placeholder="Выберите статус"
             class="w-full"
-            :invalid="submitted && !newProfile.status"
+            :invalid="submitted && !offerItem.status"
           />
-          <small v-if="submitted && !newProfile.status" class="text-red-500"
+          <small v-if="submitted && !offerItem.status" class="text-red-500"
             >Обязательное поле</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Комментарий модератора</div>
           <Textarea
-            v-model="newProfile.comment"
+            v-model="offerItem.comment"
             placeholder="Комментарий"
             class="w-full"
-            :invalid="submitted && !newProfile.comment"
+            :invalid="submitted && !offerItem.comment"
           />
-          <small v-if="submitted && !newProfile.comment" class="text-red-500"
-            >Обязательное поле</small
+          <p class="text-right">{{ offerItem.comment.length }} / 30</p>
+          <small v-if="submitted && !offerItem.comment" class="text-red-500"
+            >Обязательное поле. Минимум 30 символов</small
           >
         </div>
       </div>
+
+      <template #footer>
+        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
+        <Button label="Сохранить" icon="pi pi-check" @click="saveNewProfile" />
+      </template>
+    </Dialog>
+
+    <!-- Диалог с детальной информацией -->
+    <Dialog
+      v-model:visible="moderationDialog"
+      :style="{ width: '850px' }"
+      header="Детальная информация"
+      :modal="true"
+    >
+      <div class="flex flex-col gap-6">TODO: Детальная информация</div>
 
       <template #footer>
         <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
