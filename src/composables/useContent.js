@@ -14,30 +14,13 @@ import {
 } from "@/api/content";
 
 function transformActiveStatus(status) {
-  return status === "actived" ? "Реклама активна" : "Реклама отключена";
-}
-
-function transformLinkTYpe(linkType) {
-  switch (linkType) {
-    case "internal":
-      return "Внутренняя";
-    case "external":
-      return "Внешняя";
-    default:
-      return linkType;
-  }
-}
-
-function transformOffer(offer) {
-  switch (offer) {
-    case "offer":
-      return "Объявление от Партнера";
-    case "external":
-      return "Ссылка на внешнего Рекламодателя";
-    case "video":
-      return "Видео реклама";
-    default:
-      return offer;
+  switch (status) {
+    case "moderation":
+      return "На модерации"
+    case "actived":
+      return "Активен"
+    case "rejected":
+      return "Отклонена"
   }
 }
 
@@ -64,16 +47,16 @@ export function useContent(status = "all", isMy = false, search, page, limit) {
           description: content.description,
           tags: content.tags,
           id: content._id,
-          status: content.status,
+          status: transformActiveStatus(content.status),
           countViews: content.count_views,
           countFavorites: content.count_favorites,
           countLikes: content.count_likes,
           countDislikes: content.count_dislikes,
-          isPremium: content.is_premium,
+          isPremium: content.is_premium ? "Премиум" : "Нет",
           createdAt: content.created_at,
           updatedAt: content.updated_at,
           profile: content.profile,
-          moderatorId: content.moderator_id,
+          moderatorId: content.moderator_id ?? "Отсутствует",
         }));
       }
       return null;
@@ -109,8 +92,8 @@ export function useUpdateContent(options = {}) {
   const queryClient = useQueryClient();
   const profileStore = useProfileStore();
   return useMutation({
-    mutationFn: ({ id, accountData }) =>
-      updateContent(id, accountData, profileStore.profileID),
+    mutationFn: ({ id, contentData }) =>
+      updateContent(id, contentData, profileStore.profileID),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["content"],
@@ -154,8 +137,8 @@ export function useDeleteContent(options = {}) {
 export function useModerateContent(options = {}) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (offer) => {
-      return moderateContent(offer.id, offer.moderationData);
+    mutationFn: ({id, moderationData}) => {
+      return moderateContent(id, moderationData);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({

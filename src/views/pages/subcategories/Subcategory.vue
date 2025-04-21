@@ -64,6 +64,8 @@
       </div>
     </div>
 
+    <Content class="mt-10" />
+
     <!-- Диалог для создания нового аккаунта -->
     <Dialog
       v-model:visible="updateSubcategoryDialog"
@@ -148,6 +150,7 @@ import {
 } from "@/composables/useSubcategories";
 import categoriesData from "@/utils/categoriesData";
 import { Button } from "primevue";
+import Content from "@/views/pages/content/Content.vue";
 
 const route = useRoute();
 const submitted = ref(false);
