@@ -4,7 +4,7 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
-import { useOffers } from "@/composables/userOffers";
+import { useModerateOffer, useOffers } from "@/composables/userOffers";
 
 const profileStore = useProfileStore();
 
@@ -21,16 +21,14 @@ const offers = computed(() => {
 const toast = useToast();
 const dt = ref();
 const moderationDialog = ref(false);
-const detailDialog = ref(false);
 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 const statusOptions = ref([
-  { name: "Активный", code: "active" },
-  { name: "Неактивный", code: "inactive" },
-  { name: "Заблокирован", code: "blocked" },
+  { name: "Активный", code: "actived" },
+  { name: "Заблокирован", code: "rejected" },
 ]);
 
 const offerItem = ref({
@@ -42,18 +40,36 @@ const offerItem = ref({
   profileType: "",
 });
 
+const { mutate: moderateOffer, isPending: moderationPending } =
+  useModerateOffer({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Отзыв подтвержден",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось подтвердить отзыв",
+        life: 3000,
+      });
+    },
+  });
+
 function saveNewProfile() {
   submitted.value = true;
-
-  createProfile({
-    profile_id: profileStore.profileID,
-    phone: numericPhone.value,
-    profile_type: offerItem.value.profileType.code,
-    account_id: offerItem.value.accountId.code,
-    // avatar_id: src.value || '',
-    first_name: offerItem.value.firstName,
-    last_name: offerItem.value.lastName,
-    city: offerItem.value.city,
+  moderateOffer({
+    id: offerItem.value.id,
+    moderationData: {
+      profile_id: profileStore.profileID,
+      status: offerItem.value.status.code,
+      moderation_comment: offerItem.value.comment,
+    },
   });
 }
 
@@ -67,27 +83,18 @@ function openNew(event) {
     city: "",
     accountId: event.data.accountId,
     profileType: "",
+    id: event.data.id,
   };
   submitted.value = false;
   moderationDialog.value = true;
 }
 
-const detailOfferInfo = ref({});
-
-function openDetailDialog(offer) {
-  detailDialog.value = true;
-  detailOfferInfo.value = offer;
-}
-
 function hideDialog() {
   moderationDialog.value = false;
-  detailDialog.value = false;
   submitted.value = false;
 }
 
-function rowClick(event) {
-  openDetailDialog(event.data);
-}
+const expandedRows = ref([]);
 </script>
 
 <template>
@@ -95,6 +102,7 @@ function rowClick(event) {
     <div class="card">
       <DataTable
         ref="dt"
+        :expanded-rows="expandedRows"
         :value="offers"
         stripedRows
         dataKey="id"
@@ -127,8 +135,8 @@ function rowClick(event) {
         <Column expander style="width: 5rem" />
 
         <Column
-          field="ID"
-          header="id"
+          field="id"
+          header="ID"
           sortable
           style="min-width: 12rem"
         ></Column>
@@ -143,7 +151,15 @@ function rowClick(event) {
           header="Описание"
           sortable
           style="min-width: 12rem"
-        ></Column>
+        >
+          <template #body="slotProps">
+            <span
+              class="text-ellipsis line-clamp-3"
+              :title="slotProps.data.description"
+              >{{ slotProps.data.description }}</span
+            >
+          </template>
+        </Column>
         <Column
           field="subcategoryId"
           header="Подкатегория"
@@ -151,8 +167,8 @@ function rowClick(event) {
           style="min-width: 12rem"
         ></Column>
         <Column
-          field="Стоимость"
-          header="price"
+          field="price"
+          header="Стоимость"
           sortable
           style="min-width: 8rem"
         ></Column>
@@ -187,36 +203,52 @@ function rowClick(event) {
           </template>
         </Column>
         <template #expansion="slotProps">
-          <div v-if="slotProps.data.partner" class="p-4">
-            <h5>
-              Информация о партнере {{ slotProps.data.partner.short_name }}
-            </h5>
-            <DataTable :value="slotProps.data.partner">
+          <div v-if="slotProps.data.profile" class="p-4">
+            <div class="flex items-start gap-x-20">
+              <div>
+                <h5>Изображения</h5>
+                <Image
+                  v-for="image in slotProps.data.images"
+                  :src="'https://aidoo-test.ru/api-admin/files/' + image"
+                  alt="Image"
+                  width="250"
+                />
+              </div>
+              <div>
+                <h5>Адрес</h5>
+                <p class="text-lg">{{ slotProps.data.location.address }}</p>
+              </div>
+            </div>
+            <h5>Информация о пользователе</h5>
+            <DataTable :value="[slotProps.data.profile]">
               <Column
-                field="short_name"
-                header="Краткое название"
+                field="_id"
+                header="ID"
+                style="min-width: 8rem"
                 sortable
               ></Column>
               <Column
-                field="full_name"
-                header="Полное название"
+                field="first_name"
+                header="Имя"
+                style="min-width: 6rem"
                 sortable
               ></Column>
-              <Column field="phone" header="Телефон" sortable></Column>
-              <Column field="city" header="Город" sortable></Column>
-              <Column field="email" header="Email" sortable></Column>
-              <Column field="whatsapp" header="Whatsapp" sortable></Column>
-              <Column field="telegram" header="Telegram" sortable></Column>
-              <Column field="inn" header="ИНН" sortable></Column>
-              <Column headerStyle="width:4rem">
-                <template #body>
-                  <Button icon="pi pi-search" />
-                </template>
-              </Column>
+              <Column
+                field="last_name"
+                header="Фамилия"
+                style="min-width: 6rem"
+                sortable
+              ></Column>
+              <Column
+                field="city"
+                header="Город"
+                style="min-width: 6rem"
+                sortable
+              ></Column>
             </DataTable>
           </div>
           <div v-else>
-            <h5>Информация о партнере отсутствует</h5>
+            <h5>Информация о пользователе отсутствует</h5>
           </div>
         </template>
         <template #empty>
@@ -259,27 +291,12 @@ function rowClick(event) {
             class="w-full"
             :invalid="submitted && !offerItem.comment"
           />
-          <p class="text-right">{{ offerItem.comment.length }} / 30</p>
+          <p class="text-right">{{ offerItem.comment?.length }} / 30</p>
           <small v-if="submitted && !offerItem.comment" class="text-red-500"
             >Обязательное поле. Минимум 30 символов</small
           >
         </div>
       </div>
-
-      <template #footer>
-        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
-        <Button label="Сохранить" icon="pi pi-check" @click="saveNewProfile" />
-      </template>
-    </Dialog>
-
-    <!-- Диалог с детальной информацией -->
-    <Dialog
-      v-model:visible="moderationDialog"
-      :style="{ width: '850px' }"
-      header="Детальная информация"
-      :modal="true"
-    >
-      <div class="flex flex-col gap-6">TODO: Детальная информация</div>
 
       <template #footer>
         <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />

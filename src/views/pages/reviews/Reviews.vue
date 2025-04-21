@@ -25,7 +25,7 @@ const filters = ref({
 
 const statusOptions = ref([
   { name: "Подтвержден", code: "verified" },
-  { name: "Заблокирован", code: "blocked" },
+  { name: "Отклонен", code: "rejected" },
 ]);
 
 const reviewItem = ref({

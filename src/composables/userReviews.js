@@ -12,6 +12,8 @@ function transformStatus(status) {
   switch (status) {
     case "verified":
       return "Подтвержден";
+    case "rejected":
+      return "Отклонен";
     default:
       status;
   }

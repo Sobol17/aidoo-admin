@@ -33,6 +33,7 @@ import Documentation from "@/views/pages/Documentation.vue";
 import Login from "@/views/pages/auth/Login.vue";
 import Access from "@/views/pages/auth/Access.vue";
 import Error from "@/views/pages/auth/Error.vue";
+import Content from "@/views/pages/content/Content.vue";
 
 const router = createRouter({
   history: createWebHistory("/aidoo-admin/"),
@@ -162,6 +163,11 @@ const router = createRouter({
           path: "/reviews",
           name: "reviews",
           component: Reviews,
+        },
+        {
+          path: "/content",
+          name: "content",
+          component: Content,
         },
         {
           path: "/profile",

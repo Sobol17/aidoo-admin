@@ -7,16 +7,16 @@ const model = ref([
   {
     label: "Основные функции",
     items: [
-      { label: "Оформить нарушение", icon: "pi pi-fw pi-home", to: "/report" },
+      { label: "Платежи", icon: "pi pi-fw pi-home", to: "/orders" },
       {
-        label: "Управление МП",
+        label: "Подписки",
         icon: "pi pi-fw pi-home",
-        to: "/management",
+        to: "/subscriptions",
       },
       {
-        label: "Контроль платежей",
+        label: "Статистика",
         icon: "pi pi-fw pi-home",
-        to: "/payments",
+        to: "/stats",
       },
     ],
   },

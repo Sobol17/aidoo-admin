@@ -17,5 +17,5 @@ export const getOffers = (
     .then((res) => res.data);
 };
 
-export const moderateOffer = (data) =>
-  axiosInst.post(`${API_URL}`, data).then((res) => res.data);
+export const moderateOffer = (id, data) =>
+  axiosInst.post(`${API_URL}/${id}`, data).then((res) => res.data);

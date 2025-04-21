@@ -8,6 +8,17 @@ import {
 } from "@tanstack/vue-query";
 import { getOffers, moderateOffer } from "@/api/offers";
 
+function transformStatus(status) {
+  switch (status) {
+    case "actived":
+      return "Активный";
+    case "rejected":
+      return "Заблокирован";
+    default:
+      status;
+  }
+}
+
 export function useOffers(profileStatus, profileType, search, page, limit) {
   const profileStore = useProfileStore();
   return useQuery({
@@ -36,7 +47,7 @@ export function useOffers(profileStatus, profileType, search, page, limit) {
           price: offer.price,
           description: offer.description,
           location: offer.location,
-          offerStatus: offer.status,
+          offerStatus: transformStatus(offer.status),
           promotion: offer.promotion_info,
           profile: offer.profile,
           createdAt: formatDate(offer.created_at),
@@ -52,7 +63,7 @@ export function useModerateOffer(options = {}) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (offer) => {
-      return moderateOffer(offer);
+      return moderateOffer(offer.id, offer.moderationData);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
