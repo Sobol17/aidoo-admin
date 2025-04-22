@@ -1,23 +1,35 @@
 <script setup>
+import { useProfileStore } from "@/stores/profile";
+import { FilterMatchMode } from "@primevue/core/api";
+import { Button } from "primevue";
+import { useToast } from "primevue/usetoast";
+import { computed, ref } from "vue";
 
-import {useProfileStore} from "@/stores/profile";
-import {FilterMatchMode} from "@primevue/core/api";
-import {Button} from "primevue";
-import {useToast} from "primevue/usetoast";
-import {computed, ref} from "vue";
-
-import {useUploadFile} from "@/composables/useFiles";
-import {useContent, useCreateContent, useModerateContent, useUpdateContent, useDeleteContent} from "@/composables/useContent";
+import { useUploadFile } from "@/composables/useFiles";
+import {
+  useContent,
+  useCreateContent,
+  useDeleteContent,
+  useModerateContent,
+  useUpdateContent,
+} from "@/composables/useContent";
 import FileComponent from "@/components/FileComponent.vue";
-import {useRoute} from "vue-router";
+import { useRoute } from "vue-router";
 
+function getProfileType(profileType) {
+  if (profileType === "admin") return "Администратор";
+  if (profileType === "moderator") return "Модератор";
+  if (profileType === "supporter") return "Спонсор";
+  if (profileType === "employee") return "Сотрудник";
+  return "Неизвестно";
+}
 
 const statusOptions = ref([
   { name: "Подтвержден", code: "actived" },
   { name: "Отклонен", code: "rejected" },
 ]);
 
-const route = useRoute()
+const route = useRoute();
 
 const profileStore = useProfileStore();
 
@@ -28,7 +40,11 @@ const {
 } = useContent("all");
 
 const contentElements = computed(() => {
-  return contentItems?.value || [];
+  return (
+    contentItems?.value?.filter(
+      (item) => item.subcategoryId === route.params.subcategory,
+    ) || []
+  );
 });
 
 const toast = useToast();
@@ -38,7 +54,7 @@ const deleteContentDialog = ref(false);
 const moderationDialog = ref(false);
 
 const filters = ref({
-  global: {value: null, matchMode: FilterMatchMode.CONTAINS},
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 const elementIdToDelete = ref(null);
@@ -46,11 +62,10 @@ const elementIdToDelete = ref(null);
 const isEdit = ref(false);
 
 const newContentItem = ref({
-  images: []
+  images: [],
 });
 
 const fileUrls = ref([]);
-const fileNames = ref([]);
 const imageUrls = ref([]);
 const videoUrl = ref(null);
 const videoName = ref(null);
@@ -68,22 +83,22 @@ function addTag() {
   }
 }
 
-const {mutate: uploadImage, isPending: isImageUploading} = useUploadFile({
+const { mutate: uploadImage, isPending: isImageUploading } = useUploadFile({
   onSuccess: (data) => {
     imageUrls.value.push(data._id);
-  }
+  },
 });
 
-const {mutate: uploadFiles, isPending: isFileUploading} = useUploadFile({
+const { mutate: uploadFiles, isPending: isFileUploading } = useUploadFile({
   onSuccess: (data) => {
-    fileUrls.value.push(data._id);
-  }
+    fileUrls.value.push(data);
+  },
 });
 
-const {mutate: uploadVideo, isPending: isVideoUploading} = useUploadFile({
+const { mutate: uploadVideo, isPending: isVideoUploading } = useUploadFile({
   onSuccess: (data) => {
     videoUrl.value = data._id;
-  }
+  },
 });
 
 function onUploadImages(e) {
@@ -97,7 +112,6 @@ function onUploadImages(e) {
     }
   }
 
-  // Общее уведомление после всех загрузок
   toast.add({
     severity: "info",
     summary: "Завершено",
@@ -107,12 +121,15 @@ function onUploadImages(e) {
 }
 
 function onUploadFiles(e) {
-  e.files.forEach((item) => {
-    fileNames.value.push(item.name)
+  for (const item of e.files) {
     const formData = new FormData();
     formData.append("document", item);
-    uploadFiles(formData);
-  });
+    try {
+      uploadFiles(formData);
+    } catch {
+      console.error("Ошибка загрузки файла:", item.name);
+    }
+  }
 
   toast.add({
     severity: "info",
@@ -123,54 +140,54 @@ function onUploadFiles(e) {
 }
 
 function onUploadVideo(e) {
-  videoName.value = e.files[0].name
+  videoName.value = e.files[0].name;
   const formData = new FormData();
   formData.append("document", e.files[0]);
   uploadVideo(formData);
 }
 
-const {mutate: createContent, isPending: isCreatingNewAdv} = useCreateContent(
-    {
-      onSuccess: () => {
-        toast.add({
-          severity: "success",
-          summary: "Успех",
-          detail: "Элемент успешно создан",
-          life: 3000,
-        });
-        hideDialog();
-      },
-      onError: (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Ошибка",
-          detail: "Не удалось создать элемент контента",
-          life: 3000,
-        });
-      },
+const { mutate: createContent, isPending: isCreatingNewAdv } = useCreateContent(
+  {
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Элемент успешно создан",
+        life: 3000,
+      });
+      hideDialog();
     },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось создать элемент контента",
+        life: 3000,
+      });
+    },
+  },
 );
 
-const {mutate: updateContent, isPending: isUpdatingProfile} =
-    useUpdateContent({
-      onSuccess: () => {
-        toast.add({
-          severity: "success",
-          summary: "Успех",
-          detail: "Запись успешно обновлена",
-          life: 3000,
-        });
-        hideDialog();
-      },
-      onError: (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Ошибка",
-          detail: "Не удалось обновить запись",
-          life: 3000,
-        });
-      },
-    });
+const { mutate: updateContent, isPending: isUpdatingProfile } =
+  useUpdateContent({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Запись успешно обновлена",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось обновить запись",
+        life: 3000,
+      });
+    },
+  });
 
 function saveNewContentItem() {
   submitted.value = true;
@@ -187,7 +204,7 @@ function saveNewContentItem() {
         files: fileUrls.value,
         images: imageUrls.value,
         video: videoUrl.value,
-        status: "moderation"
+        status: "moderation",
       },
     });
   } else {
@@ -197,9 +214,9 @@ function saveNewContentItem() {
       title: newContentItem.value.title,
       description: newContentItem.value.description,
       tags: tags.value,
-      files: fileUrls.value,
+      files: fileUrls.value.map((file) => file._id),
       images: imageUrls.value,
-      video: videoUrl.value
+      video: videoUrl.value,
     };
     createContent(requestFields);
   }
@@ -210,7 +227,6 @@ const submitted = ref(false);
 function openNew() {
   isEdit.value = false;
   newContentItem.value = {};
-  fileUrls.value = null;
   videoUrl.value = null;
   submitted.value = false;
   contentDialog.value = true;
@@ -230,14 +246,13 @@ function hideDialog() {
 
 function editContentItem(contentElement) {
   isEdit.value = true;
-  fileUrls.value = contentElement.files
-  fileNames.value = contentElement.files
-  imageUrls.value = contentElement.images
-  videoUrl.value = contentElement.video
-  videoName.value = 'id' + contentElement.video
-  tags.value = contentElement.tags
+  fileUrls.value = contentElement.files;
+  imageUrls.value = contentElement.images;
+  videoUrl.value = contentElement.video;
+  videoName.value = "id" + contentElement.video;
+  tags.value = contentElement.tags;
   newContentItem.value = {
-    ...contentElement
+    ...contentElement,
   };
   contentDialog.value = true;
 }
@@ -247,26 +262,26 @@ function confirmDeleteContent(contentElement) {
   deleteContentDialog.value = true;
 }
 
-const {mutate: deleteContent, isPending: isDeletingContent} =
-    useDeleteContent({
-      onSuccess: () => {
-        toast.add({
-          severity: "success",
-          summary: "Успех",
-          detail: "Профиль успешно удален",
-          life: 3000,
-        });
-        hideDialog();
-      },
-      onError: (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Ошибка",
-          detail: "Не удалось удалить профиль",
-          life: 3000,
-        });
-      },
-    });
+const { mutate: deleteContent, isPending: isDeletingContent } =
+  useDeleteContent({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Профиль успешно удален",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось удалить профиль",
+        life: 3000,
+      });
+    },
+  });
 
 function deleteProfile() {
   deleteContent(elementIdToDelete.value);
@@ -277,25 +292,25 @@ function deleteProfile() {
 // }
 
 const { mutate: moderateContent, isPending: moderationPending } =
-    useModerateContent({
-      onSuccess: () => {
-        toast.add({
-          severity: "success",
-          summary: "Успех",
-          detail: "Отзыв подтвержден",
-          life: 3000,
-        });
-        hideDialog();
-      },
-      onError: (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Ошибка",
-          detail: "Не удалось подтвердить отзыв",
-          life: 3000,
-        });
-      },
-    });
+  useModerateContent({
+    onSuccess: () => {
+      toast.add({
+        severity: "success",
+        summary: "Успех",
+        detail: "Отзыв подтвержден",
+        life: 3000,
+      });
+      hideDialog();
+    },
+    onError: (error) => {
+      toast.add({
+        severity: "error",
+        summary: "Ошибка",
+        detail: "Не удалось подтвердить отзыв",
+        life: 3000,
+      });
+    },
+  });
 
 function saveModerationDialog() {
   submitted.value = true;
@@ -318,189 +333,200 @@ const expandedRows = ref([]);
       <Toolbar class="mb-6">
         <template #end>
           <Button
-              label="Добавить"
-              icon="pi pi-plus"
-              severity="secondary"
-              class="mr-2"
-              @click="openNew"
+            label="Добавить"
+            icon="pi pi-plus"
+            severity="secondary"
+            class="mr-2"
+            @click="openNew"
           />
         </template>
       </Toolbar>
 
       <DataTable
-          ref="dt"
-          :expanded-rows="expandedRows"
-          :value="contentElements"
-          stripedRows
-          dataKey="id"
-          :paginator="true"
-          :rows="10"
-          :filters="filters"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-          :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
-          :rowHover="true"
-          selectionMode="single"
-          :loading="isContentLoading"
+        ref="dt"
+        :expanded-rows="expandedRows"
+        :value="contentElements"
+        stripedRows
+        dataKey="id"
+        :paginator="true"
+        :rows="10"
+        :filters="filters"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        :rowsPerPageOptions="[5, 10, 25]"
+        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :rowHover="true"
+        selectionMode="single"
+        :loading="isContentLoading"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Контент</h4>
             <IconField>
               <InputIcon>
-                <i class="pi pi-search"/>
+                <i class="pi pi-search" />
               </InputIcon>
               <InputText
-                  v-model="filters['global'].value"
-                  placeholder="Поиск"
+                v-model="filters['global'].value"
+                placeholder="Поиск"
               />
             </IconField>
           </div>
         </template>
 
-        <Column expander style="width: 5rem"/>
+        <Column expander style="width: 5rem" />
 
         <Column
-            field="id"
-            header="ID"
-            sortable
-            style="min-width: 10rem"
+          field="id"
+          header="ID"
+          sortable
+          style="min-width: 10rem"
         ></Column>
         <Column
-            field="title"
-            header="Название"
-            sortable
-            style="min-width: 10rem"
+          field="title"
+          header="Название"
+          sortable
+          style="min-width: 10rem"
         ></Column>
         <Column
-            field="description"
-            header="Описание"
-            sortable
-            style="min-width: 12rem"
+          field="description"
+          header="Описание"
+          sortable
+          style="min-width: 12rem"
         >
           <template #body="slotProps">
             <span
-                class="text-ellipsis line-clamp-3"
-                :title="slotProps.data.description"
-            >{{ slotProps.data.description }}</span
+              class="text-ellipsis line-clamp-3"
+              :title="slotProps.data.description"
+              >{{ slotProps.data.description }}</span
             >
           </template>
         </Column>
         <Column
-            field="subcategoryId"
-            header="Подкатегория"
-            sortable
-            style="min-width: 10rem"
+          field="subcategoryId"
+          header="Подкатегория (ID)"
+          sortable
+          style="min-width: 10rem"
         ></Column>
         <Column
-            field="subcategoryName"
-            header="Подкатегория"
-            sortable
-            style="min-width: 8rem"
+          field="subcategoryName"
+          header="Подкатегория"
+          sortable
+          style="min-width: 8rem"
         ></Column>
         <Column
-            field="status"
-            header="Статус"
-            sortable
-            style="min-width: 7rem"
+          field="status"
+          header="Статус"
+          sortable
+          style="min-width: 7rem"
         ></Column>
         <Column
-            field="is_premium"
-            header="Премиум"
-            sortable
-            style="min-width: 5rem"
+          field="is_premium"
+          header="Премиум"
+          sortable
+          style="min-width: 5rem"
         ></Column>
         <Column
-            field="updatedAt"
-            header="Дата обновления"
-            sortable
-            style="min-width: 12rem"
+          field="updatedAt"
+          header="Дата обновления"
+          sortable
+          style="min-width: 12rem"
         ></Column>
         <Column
-            field="moderatorId"
-            header="ID модератора"
-            sortable
-            style="min-width: 12rem"
+          field="moderatorId"
+          header="ID модератора"
+          sortable
+          style="min-width: 12rem"
         ></Column>
         <Column :exportable="false" style="min-width: 12rem">
           <template #body="slotProps">
             <div class="flex items-center gap-x-2">
               <Button
-                  icon="pi pi-pencil"
-                  outlined
-                  rounded
-                  @click="editContentItem(slotProps.data)"
+                icon="pi pi-pencil"
+                outlined
+                rounded
+                @click="editContentItem(slotProps.data)"
               />
               <Button
-                  icon="pi pi-trash"
-                  outlined
-                  rounded
-                  severity="danger"
-                  @click="confirmDeleteContent(slotProps.data)"
+                icon="pi pi-trash"
+                outlined
+                rounded
+                severity="danger"
+                @click="confirmDeleteContent(slotProps.data)"
               />
               <Button
-                  icon="pi pi-file-edit"
-                  class="mr-2"
-                  outlined
-                  label="Модерирование"
-                  severity="help"
-                  @click="openModerationDialog(slotProps)"
+                icon="pi pi-file-edit"
+                class="mr-2"
+                outlined
+                label="Модерирование"
+                severity="help"
+                @click="openModerationDialog(slotProps)"
               />
             </div>
           </template>
         </Column>
         <template #expansion="slotProps">
           <div v-if="slotProps.data.profile" class="p-4">
-            <div class="flex items-start gap-x-20">
+            <div class="flex items-start gap-x-20 mb-4">
               <div>
                 <h5>Изображения</h5>
                 <div class="flex flex-wrap gap-4 min-w-[150px]">
                   <Image
-                      v-for="image in slotProps.data.images"
-                      :src="'https://aidoo-test.ru/api-admin/files/' + image"
-                      alt="Image"
-                      width="50"
+                    v-for="image in slotProps.data.images"
+                    :src="'https://aidoo-test.ru/api-admin/files/' + image"
+                    alt="Image"
+                    width="50"
                   />
                 </div>
               </div>
               <div>
                 <h5>Видео</h5>
                 <video
-                    :src="
+                  :src="
                     'https://aidoo-test.ru/api-admin/files/' +
                     slotProps.data.video
                   "
-                    muted
-                    controls
+                  muted
+                  controls
                 ></video>
               </div>
             </div>
-            <div class="flex items-start gap-x-20">
-              <div>
+            <div class="flex items-start gap-x-20 mb-4">
+              <div class="min-w-[150px]">
                 <h5>Файлы</h5>
-                <FileComponent
+                <div class="flex flex-wrap gap-x-2 mt-4">
+                  <FileComponent
                     v-for="file in slotProps.data.files"
                     :file="file"
-                ></FileComponent>
+                    download
+                  ></FileComponent>
+                </div>
               </div>
               <div>
                 <h5>Доп. информация</h5>
-                <span>Тэги: </span>
-                <span class="text-lg" v-for="tag in slotProps.data.tags">{{
-                    tag
-                  }}</span>
+                <span class="text-lg font-semibold">Тэги: </span>
+                <span v-for="tag in slotProps.data.tags">{{ tag }}</span>
                 <div>
-                  <p class="text-lg mb-2">
-                    Счетчик просмотров: {{ slotProps.data.countViews }}
+                  <p class="mb-2">
+                    <span class="text-lg font-semibold"
+                      >Счетчик просмотров:</span
+                    >
+                    {{ slotProps.data.countViews }}
                   </p>
-                  <p class="text-lg mb-2">
-                    Счетчик "в избранном": {{ slotProps.data.countFavorites }}
+                  <p class="mb-2">
+                    <span class="text-lg font-semibold"
+                      >Счетчик "в избранном":</span
+                    >
+                    {{ slotProps.data.countFavorites }}
                   </p>
-                  <p class="text-lg mb-2">
-                    Счетчик лайков: {{ slotProps.data.countLikes }}
+                  <p class="mb-2">
+                    <span class="text-lg font-semibold">Счетчик лайков:</span>
+                    {{ slotProps.data.countLikes }}
                   </p>
-                  <p class="text-lg mb-2">
-                    Счетчик дизлайков: {{ slotProps.data.countDislikes }}
+                  <p class="mb-2">
+                    <span class="text-lg font-semibold"
+                      >Счетчик дизлайков:</span
+                    >
+                    {{ slotProps.data.countDislikes }}
                   </p>
                 </div>
               </div>
@@ -508,34 +534,38 @@ const expandedRows = ref([]);
             <h5>Информация о пользователе</h5>
             <DataTable :value="[slotProps.data.profile]">
               <Column
-                  field="_id"
-                  header="ID"
-                  style="min-width: 8rem"
-                  sortable
+                field="_id"
+                header="ID"
+                style="min-width: 8rem"
+                sortable
               ></Column>
               <Column
-                  field="profile_type"
-                  header="Роль"
-                  style="min-width: 6rem"
-                  sortable
+                field="profile_type"
+                header="Роль"
+                style="min-width: 6rem"
+                sortable
+              >
+                <template #body="slotProps">
+                  <span>{{ getProfileType(slotProps.data.profile_type) }}</span>
+                </template>
+              </Column>
+              <Column
+                field="first_name"
+                header="Имя"
+                style="min-width: 6rem"
+                sortable
               ></Column>
               <Column
-                  field="first_name"
-                  header="Имя"
-                  style="min-width: 6rem"
-                  sortable
+                field="last_name"
+                header="Фамилия"
+                style="min-width: 6rem"
+                sortable
               ></Column>
               <Column
-                  field="last_name"
-                  header="Фамилия"
-                  style="min-width: 6rem"
-                  sortable
-              ></Column>
-              <Column
-                  field="city"
-                  header="Город"
-                  style="min-width: 6rem"
-                  sortable
+                field="city"
+                header="Город"
+                style="min-width: 6rem"
+                sortable
               ></Column>
             </DataTable>
           </div>
@@ -555,73 +585,75 @@ const expandedRows = ref([]);
 
     <!-- Диалог для создания контента -->
     <Dialog
-        v-model:visible="contentDialog"
-        :style="{ width: '850px' }"
-        :header="isEdit ? 'Редактирование контента' : 'Добавление контента'"
-        :modal="true"
+      v-model:visible="contentDialog"
+      :style="{ width: '850px' }"
+      :header="isEdit ? 'Редактирование контента' : 'Добавление контента'"
+      :modal="true"
     >
       <div class="flex flex-col gap-6">
         <div v-if="isEdit">
           <label for="name" class="block font-bold mb-3">ID</label>
           <InputText
-              id="id"
-              v-model.trim="newContentItem.id"
-              required="true"
-              autofocus
-              :invalid="submitted && !newContentItem.id"
-              fluid
-              disabled
+            id="id"
+            v-model.trim="newContentItem.id"
+            required="true"
+            autofocus
+            :invalid="submitted && !newContentItem.id"
+            fluid
+            disabled
           />
           <small v-if="submitted && !newContentItem.id" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Изображения</div>
           <FileUpload
-              mode="basic"
-              @select="onUploadImages"
-              customUpload
-              auto
-              severity="secondary"
-              class="p-button-outlined"
-              chooseLabel="Выбрать"
-              multiple
+            mode="basic"
+            @select="onUploadImages"
+            customUpload
+            auto
+            severity="secondary"
+            class="p-button-outlined"
+            chooseLabel="Выбрать"
+            multiple
           />
           <div class="flex flex-wrap gap-4">
-            <img
-                v-for="src in imageUrls"
-                :src="'https://aidoo-test.ru/api-admin/files/' + src"
-                alt="Image"
-                class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4"
+            <Image
+              v-for="src in imageUrls"
+              :src="'https://aidoo-test.ru/api-admin/files/' + src"
+              alt="Image"
+              class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4"
             />
           </div>
-          <small v-if="submitted && imageUrls?.length === 0" class="text-red-500"
-          >Обязательное поле</small
+          <small
+            v-if="submitted && imageUrls?.length === 0"
+            class="text-red-500"
+            >Обязательное поле</small
           >
         </div>
         <div>
           <label for="firstName" class="block font-bold mb-3">Заголовок</label>
           <InputText
-              id="firstName"
-              placeholder="Заголовок"
-              v-model.trim="newContentItem.title"
-              required="true"
-              autofocus
-              :invalid="submitted && !newContentItem.title"
-              fluid
+            id="firstName"
+            placeholder="Заголовок"
+            v-model.trim="newContentItem.title"
+            required="true"
+            autofocus
+            :invalid="submitted && !newContentItem.title"
+            fluid
           />
           <small v-if="submitted && !newContentItem.title" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Описание</div>
           <Textarea
-              v-model="newContentItem.description"
-              placeholder="Описание"
-              class="w-full min-h-40"
-              :invalid="
+            v-model="newContentItem.description"
+            placeholder="Описание"
+            class="w-full min-h-40"
+            :invalid="
               submitted &&
               !newContentItem.description &&
               newContentItem.description.length >= 30
@@ -631,42 +663,47 @@ const expandedRows = ref([]);
             {{ newContentItem.description?.length }} / 30
           </p>
           <small
-              v-if="submitted && !newContentItem.description"
-              class="text-red-500"
-          >Обязательное поле. Минимум 30 символов</small
+            v-if="submitted && !newContentItem.description"
+            class="text-red-500"
+            >Обязательное поле. Минимум 30 символов</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Видео</div>
           <FileUpload
-              mode="basic"
-              @select="onUploadVideo"
-              customUpload
-              auto
-              severity="secondary"
-              class="p-button-outlined"
-              chooseLabel="Выбрать"
+            mode="basic"
+            @select="onUploadVideo"
+            customUpload
+            auto
+            severity="secondary"
+            class="p-button-outlined"
+            chooseLabel="Выбрать"
           />
           <p>{{ videoName }}</p>
           <small v-if="submitted && !videoUrl" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Файлы</div>
           <FileUpload
-              mode="basic"
-              @select="onUploadFiles"
-              customUpload
-              auto
-              severity="secondary"
-              class="p-button-outlined"
-              chooseLabel="Выбрать"
-              multiple
+            mode="basic"
+            @select="onUploadFiles"
+            customUpload
+            auto
+            severity="secondary"
+            class="p-button-outlined"
+            chooseLabel="Выбрать"
+            multiple
           />
-          <p v-for="src in fileNames">{{ src }}</p>
+          <div class="flex flex-wrap gap-x-2 mt-4">
+            <FileComponent
+              v-for="file in fileUrls"
+              :file="file"
+            ></FileComponent>
+          </div>
           <small v-if="submitted && fileUrls?.length === 0" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
         </div>
         <div>
@@ -678,108 +715,110 @@ const expandedRows = ref([]);
           </div>
           <div class="flex items-center justify-between gap-x-4">
             <InputText
-                class="w-full"
-                id="firstName"
-                v-model.trim="tagInput"
-                required="true"
-                autofocus
-                fluid
-                :invalid="tagExists || tags.length === 0"
+              class="w-full"
+              id="firstName"
+              v-model.trim="tagInput"
+              required="true"
+              autofocus
+              fluid
+              :invalid="tagExists || tags.length === 0"
             />
-            <Button class="shrink-0" label="Добавить" @click="addTag"/>
+            <Button class="shrink-0" label="Добавить" @click="addTag" />
           </div>
           <small v-if="submitted && tags.length === 0" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
           <small v-if="tagExists" class="text-red-500"
-          >Данный тэг уже добавлен</small
+            >Данный тэг уже добавлен</small
           >
         </div>
       </div>
 
       <template #footer>
-        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog"/>
+        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
         <Button
-            label="Сохранить"
-            icon="pi pi-check"
-            @click="saveNewContentItem"
-            :loading="isCreatingNewAdv"
+          label="Сохранить"
+          icon="pi pi-check"
+          @click="saveNewContentItem"
+          :loading="isCreatingNewAdv"
         />
       </template>
     </Dialog>
 
     <Dialog
-        v-model:visible="deleteContentDialog"
-        :style="{ width: '450px' }"
-        header="Подтверждение"
-        :modal="true"
+      v-model:visible="deleteContentDialog"
+      :style="{ width: '450px' }"
+      header="Подтверждение"
+      :modal="true"
     >
       <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl"/>
+        <i class="pi pi-exclamation-triangle !text-3xl" />
         Вы уверены, что хотите удалить рекламу c id {{ elementIdToDelete }}?
       </div>
       <template #footer>
         <Button
-            label="Нет"
-            icon="pi pi-times"
-            text
-            @click="deleteContentDialog = false"
+          label="Нет"
+          icon="pi pi-times"
+          text
+          @click="deleteContentDialog = false"
         />
         <Button
-            label="Да"
-            icon="pi pi-check"
-            @click="deleteProfile"
-            :loading="isDeletingContent"
+          label="Да"
+          icon="pi pi-check"
+          @click="deleteProfile"
+          :loading="isDeletingContent"
         />
       </template>
     </Dialog>
 
     <Dialog
-        v-model:visible="moderationDialog"
-        :style="{ width: '450px' }"
-        header="Модерирование"
-        :modal="true"
+      v-model:visible="moderationDialog"
+      :style="{ width: '450px' }"
+      header="Модерирование"
+      :modal="true"
     >
       <div class="flex flex-col gap-6">
         <div>
           <div class="block font-bold mb-3">Статус</div>
           <Select
-              v-model="newContentItem.status"
-              :options="statusOptions"
-              optionLabel="name"
-              placeholder="Выберите статус"
-              class="w-full"
-              :invalid="submitted && !newContentItem.status"
+            v-model="newContentItem.status"
+            :options="statusOptions"
+            optionLabel="name"
+            placeholder="Выберите статус"
+            class="w-full"
+            :invalid="submitted && !newContentItem.status"
           />
           <small v-if="submitted && !newContentItem.status" class="text-red-500"
-          >Обязательное поле</small
+            >Обязательное поле</small
           >
         </div>
         <div>
           <div class="block font-bold mb-3">Комментарий модератора</div>
           <Textarea
-              v-model="newContentItem.comment"
-              placeholder="Комментарий"
-              class="w-full"
-              :invalid="
+            v-model="newContentItem.comment"
+            placeholder="Комментарий"
+            class="w-full"
+            :invalid="
               submitted &&
               !newContentItem.comment &&
               newContentItem.comment.length >= 30
             "
           />
           <p class="text-right">{{ newContentItem.comment?.length }} / 30</p>
-          <small v-if="submitted && !newContentItem.comment" class="text-red-500"
-          >Обязательное поле. Минимум 30 символов</small
+          <small
+            v-if="submitted && !newContentItem.comment"
+            class="text-red-500"
+            >Обязательное поле. Минимум 30 символов</small
           >
         </div>
       </div>
 
       <template #footer>
-        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog"/>
+        <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
         <Button
-            label="Сохранить"
-            icon="pi pi-check"
-            @click="saveModerationDialog"
+          label="Сохранить"
+          icon="pi pi-check"
+          @click="saveModerationDialog"
         />
       </template>
     </Dialog>

@@ -7,16 +7,16 @@ const model = ref([
   {
     label: "Основные функции",
     items: [
-      { label: "Платежи", icon: "pi pi-fw pi-home", to: "/orders" },
-      {
-        label: "Подписки",
-        icon: "pi pi-fw pi-home",
-        to: "/subscriptions",
-      },
       {
         label: "Статистика",
-        icon: "pi pi-fw pi-home",
+        icon: "pi pi-fw pi-chart-bar",
         to: "/stats",
+      },
+      { label: "Платежи", icon: "pi pi-fw pi-wallet", to: "/orders" },
+      {
+        label: "Подписки",
+        icon: "pi pi-fw pi-dollar",
+        to: "/subscriptions",
       },
     ],
   },
@@ -45,10 +45,9 @@ const model = ref([
       },
       { label: "Предложения", icon: "pi pi-fw pi-receipt", to: "/offers" },
       { label: "Отзывы", icon: "pi pi-fw pi-file-edit", to: "/reviews" },
-      { label: "Контент", icon: "pi pi-fw pi-home", to: "/content" },
-      { label: "Жалобы", icon: "pi pi-fw pi-home", to: "/complaints" },
-      { label: "Чаты", icon: "pi pi-fw pi-home", to: "/chats" },
-      { label: "Поддержка", icon: "pi pi-fw pi-home", to: "/support" },
+      { label: "Промокоды", icon: "pi pi-fw pi-percentage", to: "/promo" },
+      { label: "Жалобы", icon: "pi pi-fw pi-flag", to: "/complaints" },
+      { label: "Техподдержка", icon: "pi pi-fw pi-wrench", to: "/support" },
     ],
   },
 ]);

@@ -34,6 +34,11 @@ import Login from "@/views/pages/auth/Login.vue";
 import Access from "@/views/pages/auth/Access.vue";
 import Error from "@/views/pages/auth/Error.vue";
 import Content from "@/views/pages/content/Content.vue";
+import Orders from "@/views/pages/orders/Orders.vue";
+import Subs from "@/views/pages/subs/Subs.vue";
+import Promocodes from "@/views/pages/promo/Promocodes.vue";
+import Support from "@/views/pages/support/Support.vue";
+import Complaints from "@/views/pages/complaints/Complaints.vue";
 
 const router = createRouter({
   history: createWebHistory("/aidoo-admin/"),
@@ -42,11 +47,17 @@ const router = createRouter({
     {
       path: "/",
       component: AppLayout,
+      redirect: "/stats",
       children: [
         {
-          path: "/",
+          path: "/stats",
           name: "dashboard",
           component: Dashboard,
+        },
+        {
+          path: "/subscriptions",
+          name: "subscriptions",
+          component: Subs,
         },
         {
           path: "/uikit/formlayout",
@@ -168,6 +179,26 @@ const router = createRouter({
           path: "/content",
           name: "content",
           component: Content,
+        },
+        {
+          path: "/orders",
+          name: "orders",
+          component: Orders,
+        },
+        {
+          path: "/promo",
+          name: "promo",
+          component: Promocodes,
+        },
+        {
+          path: "/support",
+          name: "support",
+          component: Support,
+        },
+        {
+          path: "/complaints",
+          name: "complaints",
+          component: Complaints,
         },
         {
           path: "/profile",
