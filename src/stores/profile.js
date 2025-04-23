@@ -1,9 +1,10 @@
 // stores/auth.js
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
-export const useProfileStore = defineStore('profile', () => {
-	const profileID = ref(null)
+export const useProfileStore = defineStore("profile", () => {
+  const profileID = ref(null);
+  const role = ref(null);
 
-	return { profileID }
-})
+  return { profileID, role };
+});

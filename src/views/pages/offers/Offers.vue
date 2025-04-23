@@ -40,7 +40,7 @@ const offerItem = ref({
   profileType: "",
 });
 
-const { mutate: moderateOffer, isPending: moderationPending } =
+const { mutate: moderateOffer, isPending: isModeratingOffer } =
   useModerateOffer({
     onSuccess: () => {
       toast.add({
@@ -107,10 +107,10 @@ const expandedRows = ref([]);
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="10"
+        :rows="7"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rowsPerPageOptions="[5, 10, 25]"
+        :rowsPerPageOptions="[7, 10, 25]"
         currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
         :rowHover="true"
         @rowClick="rowClick"
@@ -261,11 +261,11 @@ const expandedRows = ref([]);
       </DataTable>
     </div>
 
-    <!-- Диалог для модерирования профиля -->
+    <!-- Диалог для модерирования оффера -->
     <Dialog
       v-model:visible="moderationDialog"
       :style="{ width: '450px' }"
-      header="Модерирование профиля (МП)"
+      header="Модерирование предложения"
       :modal="true"
     >
       <div class="flex flex-col gap-6">
@@ -291,8 +291,10 @@ const expandedRows = ref([]);
             class="w-full"
             :invalid="submitted && !offerItem.comment"
           />
-          <p class="text-right">{{ offerItem.comment?.length }} / 30</p>
-          <small v-if="submitted && !offerItem.comment" class="text-red-500"
+          <p class="text-right mb-0">{{ offerItem.comment?.length }} / 30</p>
+          <small
+            v-if="submitted && offerItem.comment?.length < 30"
+            class="text-red-500"
             >Обязательное поле. Минимум 30 символов</small
           >
         </div>
@@ -300,7 +302,12 @@ const expandedRows = ref([]);
 
       <template #footer>
         <Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
-        <Button label="Сохранить" icon="pi pi-check" @click="saveNewProfile" />
+        <Button
+          label="Сохранить"
+          icon="pi pi-check"
+          @click="saveNewProfile"
+          :loading="isModeratingOffer"
+        />
       </template>
     </Dialog>
   </div>

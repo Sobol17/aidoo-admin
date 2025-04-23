@@ -260,10 +260,10 @@ function deleteProfile() {
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="10"
+        :rows="7"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rowsPerPageOptions="[5, 10, 25]"
+        :rowsPerPageOptions="[7, 10, 25]"
         currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
         :loading="isAdvLoading"
       >
@@ -330,7 +330,7 @@ function deleteProfile() {
         ></Column>
         <Column
           field="id"
-          header="ID профиля"
+          header="Рекламодатель"
           sortable
           style="min-width: 16rem"
         ></Column>
