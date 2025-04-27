@@ -59,14 +59,6 @@ const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
     });
     hideDialog();
   },
-  onError: (error) => {
-    toast.add({
-      severity: "error",
-      summary: "Ошибка",
-      detail: "Не удалось отправить сообщение",
-      life: 3000,
-    });
-  },
 });
 
 function handleSendMessage(message) {

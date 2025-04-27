@@ -160,14 +160,6 @@ const { mutate: sendMessage, isPending: isCreatingNewAdv } = useSendMessage({
     });
     hideDialog();
   },
-  onError: (error) => {
-    toast.add({
-      severity: "error",
-      summary: "Ошибка",
-      detail: "Не удалось отправить сообщение",
-      life: 3000,
-    });
-  },
 });
 
 function handleSendMessage(message) {
@@ -390,11 +382,7 @@ function handleSendMessage(message) {
       </div>
 
       <template #footer>
-        <Button
-          label="Закрыть"
-          icon="pi pi-check"
-          @click="messagesDialog = false"
-        />
+        <Button label="Закрыть" @click="messagesDialog = false" />
       </template>
     </Dialog>
   </div>

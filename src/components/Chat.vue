@@ -157,7 +157,7 @@ function onUploadImages(e) {
     </div>
     <div class="text-center text-lg my-10" v-else>Сообщения отсутствуют</div>
     <!--Отправленное сообщение-->
-    <div v-if="myTempMessage" class="flex items-end justify-end">
+    <div v-if="myTempMessage" class="flex items-end mb-4 mr-4 justify-end">
       <!-- Сообщение -->
       <div
         class="max-w-xs px-4 py-2 rounded-lg shadow-sm bg-primary-500 text-white rounded-br-none"
