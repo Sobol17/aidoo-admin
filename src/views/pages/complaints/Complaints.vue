@@ -140,6 +140,10 @@ const {
   refetch: fetchMessages,
 } = useComplaintMessages(chatId);
 
+const messages = computed(() => {
+  return messagesData?.value || [];
+});
+
 function openDetailModal(item) {
   chatId.value = item.id;
   messagesDialog.value = true;
@@ -168,7 +172,7 @@ const { mutate: sendMessage, isPending: isCreatingNewAdv } = useSendMessage({
 
 function handleSendMessage(message) {
   sendMessage({
-    chat_id: chatId.value,
+    complaint_id: chatId.value,
     profile_id: profileStore.profileID,
     text: message.text,
     attachments: message.attachments,
@@ -191,7 +195,7 @@ function handleSendMessage(message) {
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"
-        :value="complaintsMock"
+        :value="complaints.complaints"
         stripedRows
         dataKey="id"
         :paginator="true"
@@ -378,7 +382,10 @@ function handleSendMessage(message) {
           strokeWidth="8"
         />
         <div v-else>
-          <Chat :messages="messagesMock" @sendMessage="handleSendMessage" />
+          <Chat
+            :messages="messages.messages"
+            @sendMessage="handleSendMessage"
+          />
         </div>
       </div>
 

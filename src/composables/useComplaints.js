@@ -97,7 +97,7 @@ export function useComplaintMessages(complaintId, page = 1, limit = 1000) {
             senderId: support.sender_id,
             text: support.text,
             attachments: support.attachments,
-            timestamp: formatDate(support.timestamp),
+            timestamp: support.timestamp,
             sender: support.sender,
           })),
         };

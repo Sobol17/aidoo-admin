@@ -90,15 +90,12 @@ const expandedRows = ref([]);
           sortable
           style="min-width: 12rem"
         ></Column>
-        <Column field="Автор" header="price" sortable style="min-width: 8rem">
-          <template #body="slotProps">
-            <span v-if="slotProps.data.profile"
-              >{{ slotProps.data.profile.first_name }}
-              {{ slotProps.data.profile.last_name }}</span
-            >
-            <span v-else>Отсутсвует</span>
-          </template>
-        </Column>
+        <Column
+          field="price"
+          header="Сумма"
+          sortable
+          style="min-width: 8rem"
+        ></Column>
         <Column
           field="createdAt"
           header="Дата создания"

@@ -15,100 +15,6 @@ const profileStore = useProfileStore();
 
 const { data: supportsData, isLoading: isLoadingReviews } = useSupport();
 
-const supportsMock = [
-  {
-    id: "6803dc220b413ebc223631b0",
-    profileId: "string",
-    profile: {
-      _id: "string",
-      first_name: "name",
-      last_name: "last_name",
-      avatar_id: "string",
-      profile_type: "admin",
-    },
-    lastMessage: {
-      sender_id: "string",
-      text: "string",
-      attachments: ["6803dc220bfebc08e7e631b0", "6803dc220bfebc08e7e631b0"],
-    },
-    createdAt: "2025-04-22T07:59:07.369Z",
-    updatedAt: "2025-04-22T07:59:07.369Z",
-  },
-];
-
-const messagesMock = ref([
-  {
-    _id: "1",
-    text: "Привет! Это моё сообщение.",
-    timestamp: "2025-04-22T08:21:02.618Z",
-    sender: { _id: "string", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: ["6803dc220bfebc08e7e631b0"],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: [],
-  },
-  {
-    _id: "1",
-    text: "Привет! Это моё сообщение.",
-    timestamp: "2025-04-22T08:21:02.618Z",
-    sender: { _id: "string", avatar_id: "my-avatar.png" },
-    attachments: [],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: [],
-  },
-  {
-    _id: "1",
-    text: "Привет! Это моё сообщение.",
-    timestamp: "2025-04-22T08:21:02.618Z",
-    sender: { _id: "string", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: [],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "his-avatar.png" },
-    attachments: [],
-  },
-  {
-    _id: "1",
-    text: "Привет! Это моё сообщение.",
-    timestamp: "2025-04-22T08:21:02.618Z",
-    sender: { _id: "string", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: [],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: [],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: ["6803dc220bfebc08e7e631b0", "6803dc220bfebc08e7e631b0"],
-  },
-  {
-    _id: "2",
-    text: "А это сообщение собеседника.",
-    timestamp: "2025-04-22T08:22:02.618Z",
-    sender: { _id: "other", avatar_id: "6803dc220bfebc08e7e631b0" },
-    attachments: ["6803dc220bfebc08e7e631b0"],
-  },
-]);
-
 const supports = computed(() => {
   return supportsData?.value || [];
 });
@@ -131,13 +37,19 @@ const {
   refetch: fetchMessages,
 } = useSupportMessages(chatId);
 
+const messages = computed(() => {
+  return (messagesData?.value || []).slice().sort((a, b) => {
+    return new Date(a.timestamp) - new Date(b.timestamp);
+  });
+});
+
 function openDetailModal(item) {
   chatId.value = item.id;
   messagesDialog.value = true;
   fetchMessages();
 }
 
-const { mutate: sendMessage, isPending: isCreatingNewAdv } = useSendMessage({
+const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
   onSuccess: () => {
     toast.add({
       severity: "success",
@@ -164,14 +76,6 @@ function handleSendMessage(message) {
     text: message.text,
     attachments: message.attachments,
   });
-
-  messagesMock.value.push({
-    _id: chatId.value,
-    text: message.text,
-    attachments: message.attachments,
-    timestamp: "2025-04-22T08:21:02.618Z",
-    sender: { _id: "string" },
-  });
 }
 </script>
 
@@ -182,7 +86,7 @@ function handleSendMessage(message) {
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"
-        :value="supportsMock"
+        :value="supports.supports"
         stripedRows
         dataKey="id"
         :paginator="true"
@@ -260,7 +164,7 @@ function handleSendMessage(message) {
         <template #expansion="slotProps">
           <div class="p-4">
             <h5>Детальная информация</h5>
-            <div v-if="slotProps.data.profile" class="p-4">
+            <div v-if="slotProps.data.user" class="p-4">
               <div class="flex gap-20">
                 <div>
                   <h5>Последнее сообщение</h5>
@@ -273,7 +177,10 @@ function handleSendMessage(message) {
                 </div>
                 <div>
                   <h5>Вложения</h5>
-                  <div class="flex flex-wrap gap-4 min-w-[150px]">
+                  <div
+                    v-if="slotProps.data.lastMessage.attachments"
+                    class="flex flex-wrap gap-4 min-w-[150px]"
+                  >
                     <Image
                       v-for="image in slotProps.data.lastMessage.attachments"
                       :src="'https://aidoo-test.ru/api-admin/files/' + image"
@@ -281,10 +188,11 @@ function handleSendMessage(message) {
                       width="50"
                     />
                   </div>
+                  <div v-else>-</div>
                 </div>
               </div>
               <h5>Информация о пользователе</h5>
-              <DataTable :value="[slotProps.data.profile]">
+              <DataTable :value="[slotProps.data.user]">
                 <Column
                   field="avatar_id"
                   header="Аватар"
@@ -362,15 +270,15 @@ function handleSendMessage(message) {
           strokeWidth="8"
         />
         <div v-else>
-          <Chat :messages="messagesMock" @sendMessage="handleSendMessage" />
+          <Chat :messages="messages" @sendMessage="handleSendMessage" />
         </div>
       </div>
 
       <template #footer>
         <Button
           label="Закрыть"
-          icon="pi pi-check"
           @click="messagesDialog = false"
+          :loading="isSendingMessage"
         />
       </template>
     </Dialog>

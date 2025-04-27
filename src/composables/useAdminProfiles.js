@@ -29,6 +29,7 @@ function getProfileStatus(profileStatus) {
 }
 
 export function useAdminProfiles(
+  accountId,
   profileStatus,
   profileType,
   search,
@@ -37,9 +38,10 @@ export function useAdminProfiles(
 ) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["admin-profiles"],
+    queryKey: ["admin-profiles", accountId],
     queryFn: () =>
       getAdminProfiles(
+        accountId,
         profileStatus,
         profileType,
         search,
@@ -82,7 +84,6 @@ export function useCreateAdminProfile(options = {}) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["admin-profiles"],
-        exact: true,
       });
 
       if (options.onSuccess) {
@@ -106,7 +107,6 @@ export function useUpdateAdminProfile(options = {}) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["admin-profiles"],
-        exact: true,
       });
 
       if (options.onSuccess) {
@@ -130,7 +130,6 @@ export function useDeleteAdminProfile(options = {}) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["admin-profiles"],
-        exact: true,
       });
       if (options.onSuccess) {
         options.onSuccess();

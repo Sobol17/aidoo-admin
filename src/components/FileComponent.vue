@@ -2,6 +2,7 @@
 const props = defineProps({
   file: Object,
   download: Boolean,
+  mini: Boolean,
 });
 </script>
 
@@ -9,6 +10,7 @@ const props = defineProps({
   <div
     v-if="!download"
     class="w-[220px] h-[80px] rounded-lg p-4 flex gap-x-2 items-center justify-center border border-gray-600"
+    :class="{ 'w-[80px] h-[40px]': mini }"
   >
     <span class="pi pi-file"></span>
     <p class="text-sm">{{ file.filename }}</p>

@@ -11,10 +11,18 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useUploadFile } from "@/composables/useFiles";
 
 const profileStore = useProfileStore();
 
-const { data: profilesData, isLoading, error } = useAdminProfiles("all");
+const route = useRoute();
+
+const {
+  data: profilesData,
+  isLoading,
+  error,
+} = useAdminProfiles(route.params.id, "all");
 
 const profiles = computed(() => {
   return profilesData?.value || [];
@@ -53,12 +61,10 @@ const src = ref(null);
 
 function onUpload(e) {
   src.value = e.files[0].objectURL;
-  toast.add({
-    severity: "info",
-    summary: "Успех",
-    detail: "Файлы загружены",
-    life: 3000,
-  });
+
+  const formData = new FormData();
+  formData.append("document", e.files[0]);
+  uploadFile(formData);
 }
 
 const numericPhone = computed(() => {
@@ -139,7 +145,7 @@ function saveNewProfile() {
       profile_id: profileStore.profileID,
       phone: numericPhone.value,
       profile_type: newProfile.value.profileType.code,
-      account_id: newProfile.value.accountId.code,
+      account_id: route.params.id,
       // avatar_id: src.value || '',
       first_name: newProfile.value.firstName,
       last_name: newProfile.value.lastName,
@@ -233,6 +239,26 @@ function deleteProfile() {
 // function exportCSV() {
 // 	dt.value.exportCSV()
 // }
+
+const { mutate: uploadFile, isPending: isFileUploading } = useUploadFile({
+  onSuccess: (data) => {
+    toast.add({
+      severity: "success",
+      summary: "Успех",
+      detail: "Файл загружен успешно",
+      life: 3000,
+    });
+    newProfile.value.avatar = data._id;
+  },
+  onError: (error) => {
+    toast.add({
+      severity: "error",
+      summary: "Ошибка",
+      detail: "Не загрузить файл",
+      life: 3000,
+    });
+  },
+});
 </script>
 
 <template>
@@ -416,8 +442,8 @@ function deleteProfile() {
             chooseLabel="Выбрать"
           />
           <img
-            v-if="src"
-            :src="src"
+            v-if="newProfile.avatar"
+            :src="'https://aidoo-test.ru/api-admin/files/' + newProfile.avatar"
             alt="Image"
             class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4"
           />
@@ -485,24 +511,6 @@ function deleteProfile() {
             :options="profileTypes"
             optionLabel="name"
             placeholder="Тип профиля"
-            class="w-full"
-            :invalid="submitted && !newProfile.profileType"
-          />
-          <small
-            v-if="submitted && !newProfile.profileType"
-            class="text-red-500"
-            >Обязательное поле</small
-          >
-        </div>
-        <div>
-          <div class="block font-bold mb-3">
-            Аккаунт, к которому привязан профиль
-          </div>
-          <Select
-            v-model="newProfile.accountId"
-            :options="adminAccountsOptions"
-            optionLabel="name"
-            placeholder="Аккаунт (ID)"
             class="w-full"
             :invalid="submitted && !newProfile.profileType"
           />

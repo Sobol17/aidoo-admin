@@ -55,13 +55,6 @@ const model = ref([
         roles: ["admin", "moderator"],
       },
       {
-        label: "Профили(ПУ)",
-        icon: "pi pi-fw pi-user-edit",
-        iconSrc: "/demo/images/setting.png",
-        to: "/admin-profiles",
-        roles: ["admin", "moderator"],
-      },
-      {
         label: "Профили(МП)",
         icon: "pi pi-fw pi-user",
         to: "/user-profiles",

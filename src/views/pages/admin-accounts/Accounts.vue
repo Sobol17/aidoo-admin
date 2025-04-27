@@ -239,11 +239,14 @@ function rowClick(event) {
           sortable
           style="min-width: 16rem"
         ></Column>
-        <Column
-          field="password"
-          header="Пароль"
-          style="min-width: 16rem"
-        ></Column>
+        <Column field="roles" header="Роли" style="min-width: 16rem">
+          <template #body="slotProps">
+            <div v-if="slotProps.data.roles?.length > 0">
+              <span v-for="role in slotProps.data.roles">{{ role }}</span>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </Column>
         <Column
           field="id"
           header="ID"
