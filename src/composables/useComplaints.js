@@ -89,18 +89,15 @@ export function useComplaintMessages(complaintId, page = 1, limit = 1000) {
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const supportItems = data.documents;
-        return {
-          countMessages: data.count,
-          messages: supportItems.map((support) => ({
-            id: support._id,
-            chatId: support.complaint_id,
-            senderId: support.sender_id,
-            text: support.text,
-            attachments: support.attachments,
-            timestamp: support.timestamp,
-            sender: support.sender,
-          })),
-        };
+        return supportItems.map((support) => ({
+          id: support._id,
+          chatId: support.complaint_id,
+          senderId: support.sender_id,
+          text: support.text,
+          attachments: support.attachments,
+          timestamp: support.timestamp,
+          sender: support.sender,
+        }));
       }
       return null;
     },

@@ -141,7 +141,9 @@ const {
 } = useComplaintMessages(chatId);
 
 const messages = computed(() => {
-  return messagesData?.value || [];
+  return (messagesData?.value || []).slice().sort((a, b) => {
+    return new Date(a.timestamp) - new Date(b.timestamp);
+  });
 });
 
 function openDetailModal(item) {
@@ -374,10 +376,7 @@ function handleSendMessage(message) {
           strokeWidth="8"
         />
         <div v-else>
-          <Chat
-            :messages="messages.messages"
-            @sendMessage="handleSendMessage"
-          />
+          <Chat :messages="messages" @sendMessage="handleSendMessage" />
         </div>
       </div>
 
