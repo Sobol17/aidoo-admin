@@ -3,7 +3,7 @@ import axiosInst from "@/api/axios.instance";
 const API_URL = "/content";
 
 export const getContent = (
-  status = "",
+  status = "all",
   isMy,
   search = "",
   page = 1,

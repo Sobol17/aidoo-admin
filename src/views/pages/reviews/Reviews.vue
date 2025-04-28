@@ -4,11 +4,30 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
-import { useModerateReview, useReviews } from "@/composables/userReviews";
+import { useModerateReview, useReviews } from "@/composables/useReviews";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
 
-const { data: reviewsData, isLoading: isLoadingReviews } = useReviews("all");
+const reviewStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Подтвержденные", code: "verified" },
+  { name: "На модерации", code: "moderation" },
+  { name: "Отклоненные", code: "rejected" },
+];
+
+const status = ref("all");
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
+
+const { data: reviewsData, isLoading: isLoadingReviews } = useReviews(
+  status,
+  search,
+  page,
+  limit,
+);
 
 const reviews = computed(() => {
   return reviewsData?.value || [];
@@ -105,6 +124,19 @@ function rowClick(event) {
 }
 
 const expandedRows = ref([]);
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -113,32 +145,42 @@ const expandedRows = ref([]);
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"
-        :value="reviews"
+        :value="reviews.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="reviews.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${reviews.count} элементов`"
         :rowHover="true"
         @rowClick="rowClick"
         selectionMode="single"
         :loading="isLoadingReviews"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Отзывы</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="status"
+                :options="reviewStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
               />
-            </IconField>
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
 

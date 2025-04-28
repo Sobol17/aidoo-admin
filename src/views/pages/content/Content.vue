@@ -15,6 +15,7 @@ import {
 } from "@/composables/useContent";
 import FileComponent from "@/components/FileComponent.vue";
 import { useRoute } from "vue-router";
+import { debounce } from "@/utils/debounce";
 
 function getProfileType(profileType) {
   if (profileType === "admin") return "Администратор";
@@ -25,9 +26,23 @@ function getProfileType(profileType) {
 }
 
 const statusOptions = ref([
-  { name: "Подтвержден", code: "actived" },
+  { name: "Активен", code: "actived" },
   { name: "Отклонен", code: "rejected" },
 ]);
+
+const contentStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Активные", code: "actived" },
+  { name: "На модерации", code: "moderation" },
+  { name: "Отклоненные", code: "rejected" },
+  { name: "В черновике", code: "draft" },
+  { name: "В архиве", code: "archived" },
+];
+
+const selectedContentStatus = ref("all");
+const page = ref(1);
+const search = ref("");
+const limit = ref(7);
 
 const route = useRoute();
 
@@ -37,14 +52,10 @@ const {
   data: contentItems,
   isLoading: isContentLoading,
   error,
-} = useContent("all");
+} = useContent(selectedContentStatus, search, page, limit);
 
 const contentElements = computed(() => {
-  return (
-    contentItems?.value?.filter(
-      (item) => item.subcategoryId === route.params.subcategory,
-    ) || []
-  );
+  return contentItems?.value || [];
 });
 
 const toast = useToast();
@@ -325,6 +336,19 @@ function saveModerationDialog() {
 }
 
 const expandedRows = ref([]);
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -345,31 +369,45 @@ const expandedRows = ref([]);
       <DataTable
         ref="dt"
         :expanded-rows="expandedRows"
-        :value="contentElements"
+        :value="
+          contentElements.items?.filter(
+            (item) => item.subcategoryId === route.params.subcategory,
+          )
+        "
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="contentElements.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${contentElements.count} элементов`"
         :rowHover="true"
         selectionMode="single"
         :loading="isContentLoading"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Контент</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="selectedContentStatus"
+                :options="contentStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
               />
-            </IconField>
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
 

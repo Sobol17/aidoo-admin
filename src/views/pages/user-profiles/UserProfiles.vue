@@ -8,14 +8,35 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
+
+const userStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Активные", code: "actived" },
+  { name: "На модерации", code: "modetation" },
+  { name: "Отклоненные", code: "rejected" },
+];
+
+const userProfileTypes = [
+  { name: "Все", code: "all" },
+  { name: "Партнер", code: "partner" },
+  { name: "Клиент", code: "client" },
+];
+
+const status = ref({ code: "all" });
+const profileTypeFilter = ref({ code: "all" });
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
 
 const {
   data: profilesData,
   isLoading: isLoadingProfiles,
   error,
-} = useUserProfiles("all");
+} = useUserProfiles(status, profileTypeFilter, search, page, limit);
 
 const profiles = computed(() => {
   return profilesData?.value || [];
@@ -103,6 +124,19 @@ const expandedRows = ref([]);
 // function exportCSV() {
 // 	dt.value.exportCSV()
 // }
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -111,30 +145,47 @@ const expandedRows = ref([]);
       <DataTable
         v-model:expandedRows="expandedRows"
         ref="dt"
-        :value="profiles"
+        :value="profiles.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="profiles.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${profiles.count} элементов`"
         :rowHover="true"
         :loading="isLoadingProfiles"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Профили (МП)</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="profileTypeFilter"
+                :options="userProfileTypes"
+                optionLabel="name"
+                placeholder="Выберите роль"
+                class="w-full"
               />
-            </IconField>
+              <Select
+                v-model="status"
+                :options="userStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
+              />
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
 
@@ -160,12 +211,6 @@ const expandedRows = ref([]);
         <Column
           field="accountId"
           header="Аккаунт (ID)"
-          sortable
-          style="min-width: 12rem"
-        ></Column>
-        <Column
-          field="creatorId"
-          header="Создатель (ID)"
           sortable
           style="min-width: 12rem"
         ></Column>

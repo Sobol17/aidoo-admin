@@ -7,12 +7,11 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/vue-query";
+import { computed } from "vue";
 
 function getProfileType(profileType) {
-  if (profileType === "admin") return "Администратор";
-  if (profileType === "moderator") return "Модератор";
-  if (profileType === "supporter") return "Спонсор";
-  if (profileType === "employee") return "Сотрудник";
+  if (profileType === "partner") return "Партнер";
+  if (profileType === "client") return "Клиент";
   return "Неизвестно";
 }
 
@@ -31,14 +30,21 @@ export function useUserProfiles(
 ) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["user-profiles"],
+    queryKey: computed(() => [
+      "user-profiles",
+      page,
+      limit,
+      profileStatus,
+      profileType,
+      search,
+    ]),
     queryFn: () =>
       getUserProfiles(
-        profileStatus,
-        profileType,
-        search,
-        page,
-        limit,
+        profileStatus.value.code,
+        profileType.value.code,
+        search.value,
+        page.value,
+        limit.value,
         profileStore.profileID,
       ),
     placeholderData: keepPreviousData,
@@ -47,21 +53,23 @@ export function useUserProfiles(
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const userProfiles = data.documents;
-        return userProfiles.map((profile) => ({
-          createdAt: formatDate(profile.created_at),
-          updatedAt: formatDate(profile.updated_at),
-          accountId: profile.account_id,
-          creatorId: profile.creator_id,
-          phone: profile.phone,
-          profileType: getProfileType(profile.profile_type),
-          avatar: profile.avatar_id,
-          firstName: profile.first_name,
-          lastName: profile.last_name,
-          city: profile.city,
-          id: profile._id,
-          status: getProfileStatus(profile.status),
-          partner: profile.partner_info,
-        }));
+        return {
+          count: data.count,
+          items: userProfiles.map((profile) => ({
+            createdAt: formatDate(profile.created_at),
+            updatedAt: formatDate(profile.updated_at),
+            accountId: profile.account_id,
+            phone: profile.phone,
+            profileType: getProfileType(profile.profile_type),
+            avatar: profile.avatar_id,
+            firstName: profile.first_name,
+            lastName: profile.last_name ? profile.last_name : "-",
+            city: profile.city ? profile.city : "-",
+            id: profile._id,
+            status: getProfileStatus(profile.status),
+            partner: profile.partner_info,
+          })),
+        };
       }
       return null;
     },
@@ -77,7 +85,6 @@ export function useModerateUserProfiles(options = {}) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["user-profiles"],
-        exact: true,
       });
 
       if (options.onSuccess) {

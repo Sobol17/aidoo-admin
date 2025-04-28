@@ -12,14 +12,27 @@ import {
   useUpdateAdvertising,
 } from "@/composables/useAdvertising";
 import { useUploadFile } from "@/composables/useFiles";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
+
+const advStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Активные", code: "actived" },
+  { name: "Отключенные", code: "draft" },
+];
+
+const status = ref({ code: "all" });
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
 
 const {
   data: advertisingData,
   isLoading: isAdvLoading,
   error,
-} = useAdvertising("all");
+} = useAdvertising(status, search, page, limit);
 
 const advertisingElements = computed(() => {
   return advertisingData?.value || [];
@@ -237,6 +250,19 @@ function deleteProfile() {
 // function exportCSV() {
 // 	dt.value.exportCSV()
 // }
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -256,29 +282,39 @@ function deleteProfile() {
 
       <DataTable
         ref="dt"
-        :value="advertisingElements"
+        :value="advertisingElements.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="advertisingElements.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${advertisingElements.count} элементов`"
         :loading="isAdvLoading"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Реклама</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="status"
+                :options="advStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
               />
-            </IconField>
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
         <Column field="fileId" header="Файл" sortable style="min-width: 8rem">

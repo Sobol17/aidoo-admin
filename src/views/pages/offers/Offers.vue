@@ -4,15 +4,31 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
-import { useModerateOffer, useOffers } from "@/composables/userOffers";
+import { useModerateOffer, useOffers } from "@/composables/useOffers";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
+
+const offerStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Активные", code: "actived" },
+  { name: "На модерации", code: "moderation" },
+  { name: "Отклоненные", code: "rejected" },
+  { name: "В черновике", code: "draft" },
+  { name: "В архиве", code: "archived" },
+];
+
+const status = ref("all");
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
 
 const {
   data: offersData,
   isLoading: isLoadingProfiles,
   error,
-} = useOffers("all");
+} = useOffers(status, search, page, limit);
 
 const offers = computed(() => {
   return offersData?.value || [];
@@ -95,6 +111,19 @@ function hideDialog() {
 }
 
 const expandedRows = ref([]);
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -103,32 +132,41 @@ const expandedRows = ref([]);
       <DataTable
         ref="dt"
         :expanded-rows="expandedRows"
-        :value="offers"
+        :value="offers.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="offers.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${offers.count} элементов`"
         :rowHover="true"
-        @rowClick="rowClick"
         selectionMode="single"
         :loading="isLoadingProfiles"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Предложения</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="status"
+                :options="offerStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
               />
-            </IconField>
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
 

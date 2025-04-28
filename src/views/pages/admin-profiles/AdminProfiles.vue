@@ -13,16 +13,45 @@ import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useUploadFile } from "@/composables/useFiles";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
 
 const route = useRoute();
 
+const profileStatuses = [
+  { name: "Все", code: "all" },
+  { name: "Активные", code: "actived" },
+  { name: "Отклоненные", code: "rejected" },
+];
+
+const profileTypesFilter = [
+  { name: "Все", code: "all" },
+  { name: "Админ", code: "admin" },
+  { name: "Модератор", code: "moderator" },
+  { name: "Оператор ТП", code: "support" },
+  { name: "Сотрудник", code: "employee" },
+];
+
+const selectedProfileStatus = ref("all");
+const selectedProfileType = ref("all");
+const page = ref(1);
+const search = ref("");
+const first = ref(0);
+const limit = ref(7);
+
 const {
   data: profilesData,
   isLoading,
   error,
-} = useAdminProfiles(route.params.id, "all");
+} = useAdminProfiles(
+  route.params.id,
+  selectedProfileStatus,
+  selectedProfileType,
+  search,
+  page,
+  limit,
+);
 
 const profiles = computed(() => {
   return profilesData?.value || [];
@@ -135,7 +164,7 @@ function saveNewProfile() {
         profile_type: newProfile.value.profileType.code,
         first_name: newProfile.value.firstName,
         status: "actived",
-        // avatar_id: src.value || '',
+        avatar_id: newProfile.value.avatar,
         last_name: newProfile.value.lastName,
         city: newProfile.value.city,
       },
@@ -146,7 +175,7 @@ function saveNewProfile() {
       phone: numericPhone.value,
       profile_type: newProfile.value.profileType.code,
       account_id: route.params.id,
-      // avatar_id: src.value || '',
+      avatar_id: newProfile.value.avatar,
       first_name: newProfile.value.firstName,
       last_name: newProfile.value.lastName,
       city: newProfile.value.city,
@@ -259,6 +288,19 @@ const { mutate: uploadFile, isPending: isFileUploading } = useUploadFile({
     });
   },
 });
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -278,29 +320,46 @@ const { mutate: uploadFile, isPending: isFileUploading } = useUploadFile({
 
       <DataTable
         ref="dt"
-        :value="profiles"
+        :value="profiles.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="profiles.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${profiles.count} элементов`"
         :loading="isLoading"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Профили (ПУ)</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
+            <div class="flex gap-x-2">
+              <Select
+                v-model="selectedProfileType"
+                :options="profileTypesFilter"
+                optionLabel="name"
+                placeholder="Выберите роль"
+                class="w-full"
               />
-            </IconField>
+              <Select
+                v-model="selectedProfileStatus"
+                :options="profileStatuses"
+                optionLabel="name"
+                placeholder="Выберите статус"
+                class="w-full"
+              />
+              <IconField>
+                <InputIcon>
+                  <i class="pi pi-search" />
+                </InputIcon>
+                <InputText @input="handleSearch" placeholder="Поиск" />
+              </IconField>
+            </div>
           </div>
         </template>
 
@@ -308,7 +367,9 @@ const { mutate: uploadFile, isPending: isFileUploading } = useUploadFile({
           <template #body="slotProps">
             <Avatar
               v-if="slotProps.data.avatar"
-              :image="slotProps.data.avatar"
+              :image="
+                'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar
+              "
               shape="circle"
             />
             <div

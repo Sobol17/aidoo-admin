@@ -5,10 +5,20 @@ import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
 import { useSubs } from "@/composables/useSubs";
 import { formatDate } from "@/utils/formatDate";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
 
-const { data: subsData, isLoading: isLoadingReviews } = useSubs();
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
+
+const { data: subsData, isLoading: isLoadingReviews } = useSubs(
+  search,
+  page,
+  limit,
+);
 
 const subs = computed(() => {
   return subsData?.value || [];
@@ -27,6 +37,19 @@ const actionOptions = ref([
 ]);
 
 const expandedRows = ref([]);
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -36,28 +59,29 @@ const expandedRows = ref([]);
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"
-        :value="subs.subs"
+        :value="subs.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="subs.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${subs.count} элементов`"
         :loading="isLoadingReviews"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Всего: {{ subs.countSubs }}</h4>
+            <h4 class="m-0">Всего: {{ subs.count }}</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
               </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
-              />
+              <InputText @input="handleSearch" placeholder="Поиск" />
             </IconField>
           </div>
         </template>

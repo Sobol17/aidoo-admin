@@ -3,6 +3,7 @@ import { useProfileStore } from "@/stores/profile";
 import { FilterMatchMode } from "@primevue/core/api";
 import { computed, ref } from "vue";
 import { useOrders } from "@/composables/useOrders";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
 
@@ -16,8 +17,17 @@ const statusOptions = ref([
   { name: "Отклонен", code: "CANCELED" },
 ]);
 
-const { data: ordersData, isLoading: isLoadingReviews } =
-  useOrders(selectedOrderStatus);
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
+
+const { data: ordersData, isLoading: isLoadingReviews } = useOrders(
+  selectedOrderStatus,
+  search,
+  page,
+  limit,
+);
 
 const orders = computed(() => {
   return ordersData?.value || [];
@@ -37,7 +47,21 @@ const reviewItem = ref({
   accountId: "",
   profileType: "",
 });
+
 const expandedRows = ref([]);
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -47,16 +71,20 @@ const expandedRows = ref([]);
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"
-        :value="orders.orders"
+        :value="orders.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="orders.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${orders.count} элементов`"
         :loading="isLoadingReviews"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -73,10 +101,7 @@ const expandedRows = ref([]);
                 <InputIcon>
                   <i class="pi pi-search" />
                 </InputIcon>
-                <InputText
-                  v-model="filters['global'].value"
-                  placeholder="Поиск"
-                />
+                <InputText @input="handleSearch" placeholder="Поиск" />
               </IconField>
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/vue-query";
+import { computed } from "vue";
 
 function getProfileType(profileType) {
   if (profileType === "admin") return "Администратор";
@@ -38,15 +39,23 @@ export function useAdminProfiles(
 ) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["admin-profiles", accountId],
+    queryKey: computed(() => [
+      "admin-profiles",
+      accountId,
+      profileStatus,
+      profileType,
+      search,
+      page,
+      limit,
+    ]),
     queryFn: () =>
       getAdminProfiles(
         accountId,
-        profileStatus,
-        profileType,
-        search,
-        page,
-        limit,
+        profileStatus.value.code,
+        profileType.value.code,
+        search.value,
+        page.value,
+        limit.value,
         profileStore.profileID,
       ),
     placeholderData: keepPreviousData,
@@ -55,20 +64,23 @@ export function useAdminProfiles(
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const accounts = data.documents;
-        return accounts.map((account) => ({
-          createdAt: formatDate(account.created_at),
-          updatedAt: formatDate(account.updated_at),
-          accountId: account.account_id,
-          creatorId: account.creator_id,
-          phone: account.phone,
-          profileType: getProfileType(account.profile_type),
-          avatar: account.avatar_id,
-          firstName: account.first_name,
-          lastName: account.last_name,
-          city: account.city,
-          id: account._id,
-          status: getProfileStatus(account.status),
-        }));
+        return {
+          count: data.count,
+          items: accounts.map((account) => ({
+            createdAt: formatDate(account.created_at),
+            updatedAt: formatDate(account.updated_at),
+            accountId: account.account_id,
+            creatorId: account.creator_id,
+            phone: account.phone,
+            profileType: getProfileType(account.profile_type),
+            avatar: account.avatar_id,
+            firstName: account.first_name,
+            lastName: account.last_name,
+            city: account.city,
+            id: account._id,
+            status: getProfileStatus(account.status),
+          })),
+        };
       }
       return null;
     },

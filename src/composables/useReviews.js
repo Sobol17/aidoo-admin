@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/vue-query";
 import { getReviews, moderateReview } from "@/api/reviews";
+import { computed } from "vue";
 
 function transformStatus(status) {
   switch (status) {
@@ -19,17 +20,16 @@ function transformStatus(status) {
   }
 }
 
-export function useReviews(profileStatus, profileType, search, page, limit) {
+export function useReviews(status, search, page, limit) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["reviews"],
+    queryKey: computed(() => ["reviews", status, page, limit]),
     queryFn: () =>
       getReviews(
-        profileStatus,
-        profileType,
-        search,
-        page,
-        limit,
+        status.value.code,
+        search.value,
+        page.value,
+        limit.value,
         profileStore.profileID,
       ),
     placeholderData: keepPreviousData,
@@ -38,17 +38,20 @@ export function useReviews(profileStatus, profileType, search, page, limit) {
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const reviews = data.documents;
-        return reviews.map((review) => ({
-          id: review._id,
-          grade: review.grade,
-          attachments: review.attachments,
-          text: review.text,
-          reviewStatus: transformStatus(review.status),
-          profile: review.profile,
-          createdAt: formatDate(review.created_at),
-          updatedAt: formatDate(review.updated_at),
-          replies: review.replies,
-        }));
+        return {
+          count: data.count,
+          items: reviews.map((review) => ({
+            id: review._id,
+            grade: review.grade,
+            attachments: review.attachments,
+            text: review.text,
+            reviewStatus: transformStatus(review.status),
+            profile: review.profile,
+            createdAt: formatDate(review.created_at),
+            updatedAt: formatDate(review.updated_at),
+            replies: review.replies,
+          })),
+        };
       }
       return null;
     },
@@ -64,7 +67,6 @@ export function useModerateReview(options = {}) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["reviews"],
-        exact: true,
       });
 
       if (options.onSuccess) {

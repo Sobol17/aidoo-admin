@@ -2,6 +2,7 @@ import { useProfileStore } from "@/stores/profile";
 import { formatDate } from "@/utils/formatDate";
 import { keepPreviousData, useQuery } from "@tanstack/vue-query";
 import { getLogs } from "@/api/logs";
+import { computed } from "vue";
 
 function transformAction(action) {
   switch (action) {
@@ -29,11 +30,12 @@ function transformObjectType(object) {
   }
 }
 
-export function useLogs(accountId, search, page, limit) {
+export function useLogs(accountId, page, limit) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["logs"],
-    queryFn: () => getLogs(accountId, page, limit, profileStore.profileID),
+    queryKey: computed(() => ["logs", accountId, page, limit]),
+    queryFn: () =>
+      getLogs(accountId, page.value, limit.value, profileStore.profileID),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 минут в миллисекундах
     cacheTime: 5 * 60 * 1000, // 5 минут в миллисекундах

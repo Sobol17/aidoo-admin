@@ -11,10 +11,20 @@ import { Button } from "primevue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { debounce } from "@/utils/debounce";
 
 const profileStore = useProfileStore();
 
-const { data: accountsData, isLoading, error } = useAccounts();
+const search = ref("");
+const page = ref(1);
+const first = ref(0);
+const limit = ref(7);
+
+const {
+  data: accountsData,
+  isLoading,
+  error,
+} = useAccounts(search, page, limit);
 
 const accounts = computed(() => {
   return accountsData?.value || [];
@@ -179,6 +189,19 @@ function rowClick(event) {
 // function exportCSV() {
 // 	dt.value.exportCSV()
 // }
+
+function handleChangePage(event) {
+  page.value = event.page + 1;
+  first.value = event.page;
+}
+
+function handleChangeLimit(newLimit) {
+  limit.value = newLimit;
+}
+
+const handleSearch = debounce((event) => {
+  search.value = event.target.value;
+}, 500);
 </script>
 
 <template>
@@ -198,19 +221,23 @@ function rowClick(event) {
 
       <DataTable
         ref="dt"
-        :value="accounts"
+        :value="accounts.items"
         stripedRows
         dataKey="id"
         :paginator="true"
-        :rows="7"
+        :rows="limit"
+        :total-records="accounts.count"
+        :lazy="true"
         :filters="filters"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rowsPerPageOptions="[7, 10, 25]"
-        currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
+        :currentPageReportTemplate="`{first} до {last} из ${accounts.count} элементов`"
         @rowClick="rowClick"
         :rowHover="true"
         selectionMode="single"
         :loading="isLoading"
+        @page="handleChangePage"
+        @update:rows="handleChangeLimit"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -219,10 +246,7 @@ function rowClick(event) {
               <InputIcon>
                 <i class="pi pi-search" />
               </InputIcon>
-              <InputText
-                v-model="filters['global'].value"
-                placeholder="Поиск"
-              />
+              <InputText @input="handleSearch" placeholder="Поиск" />
             </IconField>
           </div>
         </template>

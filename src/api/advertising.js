@@ -3,6 +3,7 @@ import axiosInst from "@/api/axios.instance";
 const API_URL = "/advertising";
 
 export const getAdvertising = (
+  status = "",
   search = "",
   page = 1,
   limit = 10,
@@ -10,7 +11,7 @@ export const getAdvertising = (
 ) => {
   return axiosInst
     .get(
-      `${API_URL}${search ? `?search=${search}&` : "?"}page=${page}&limit=${limit}&profile_id=${profileID}`,
+      `${API_URL}${search ? `?search=${search}&` : "?"}page=${page}&limit=${limit}&profile_id=${profileID}&status=${status}`,
     )
     .then((res) => res.data);
 };

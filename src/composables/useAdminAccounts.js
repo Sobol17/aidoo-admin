@@ -13,6 +13,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/vue-query";
+import { computed } from "vue";
 
 function getProfileType(profileType) {
   if (profileType === "admin") return "Администратор";
@@ -25,25 +26,29 @@ function getProfileType(profileType) {
 export function useAccounts(search = "", page = 1, limit = 1000) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["accounts"],
-    queryFn: () => getList(search, page, limit, profileStore.profileID),
+    queryKey: computed(() => ["accounts", search, page, limit]),
+    queryFn: () =>
+      getList(search.value, page.value, limit.value, profileStore.profileID),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 минут в миллисекундах
     cacheTime: 5 * 60 * 1000, // 5 минут в миллисекундах
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const accounts = data.documents;
-        return accounts.map((account) => ({
-          password: account.password,
-          phone: account.phone,
-          roles: account.roles.map(role => {
-            return getProfileType(role)
-          }),
-          createdAt: formatDate(account.created_at),
-          updatedAt: formatDate(account.updated_at),
-          id: account._id,
-          creatorID: account.creator_id,
-        }));
+        return {
+          count: data.count,
+          items: accounts.map((account) => ({
+            password: account.password,
+            phone: account.phone,
+            roles: account.roles.map((role) => {
+              return getProfileType(role);
+            }),
+            createdAt: formatDate(account.created_at),
+            updatedAt: formatDate(account.updated_at),
+            id: account._id,
+            creatorID: account.creator_id,
+          })),
+        };
       }
       return null;
     },
@@ -66,7 +71,7 @@ export function useCreateAccount(options = {}) {
       return createAccount(accountData);
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
 
       if (options.onSuccess) {
         options.onSuccess(data, variables);
@@ -85,7 +90,7 @@ export function useUpdateAccount(options = {}) {
   return useMutation({
     mutationFn: ({ id, accountData }) => updateAccount(id, accountData),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
 
       if (options.onSuccess) {
         options.onSuccess(data, variables);
@@ -105,7 +110,7 @@ export function useDeleteAccount(options = {}) {
   return useMutation({
     mutationFn: (accountId) => deleteAccount(accountId, profileStore.profileID),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
       if (options.onSuccess) {
         options.onSuccess();
       }

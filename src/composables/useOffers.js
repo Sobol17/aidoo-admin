@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/vue-query";
 import { getOffers, moderateOffer } from "@/api/offers";
+import { computed } from "vue";
 
 function transformStatus(status) {
   switch (status) {
@@ -19,17 +20,16 @@ function transformStatus(status) {
   }
 }
 
-export function useOffers(profileStatus, profileType, search, page, limit) {
+export function useOffers(status, search, page, limit) {
   const profileStore = useProfileStore();
   return useQuery({
-    queryKey: ["offers"],
+    queryKey: computed(() => ["offers", status, search, page, limit]),
     queryFn: () =>
       getOffers(
-        profileStatus,
-        profileType,
-        search,
-        page,
-        limit,
+        status.value.code,
+        search.value,
+        page.value,
+        limit.value,
         profileStore.profileID,
       ),
     placeholderData: keepPreviousData,
@@ -38,21 +38,24 @@ export function useOffers(profileStatus, profileType, search, page, limit) {
     select: (data) => {
       if (data && data.documents && data.documents.length > 0) {
         const offers = data.documents;
-        return offers.map((offer) => ({
-          id: offer._id,
-          images: offer.images,
-          video: offer.video,
-          title: offer.title,
-          subcategoryId: offer.subcategory_id,
-          price: offer.price,
-          description: offer.description,
-          location: offer.location,
-          offerStatus: transformStatus(offer.status),
-          promotion: offer.promotion_info,
-          profile: offer.profile,
-          createdAt: formatDate(offer.created_at),
-          updatedAt: formatDate(offer.updated_at),
-        }));
+        return {
+          count: data.count,
+          items: offers.map((offer) => ({
+            id: offer._id,
+            images: offer.images,
+            video: offer.video,
+            title: offer.title,
+            subcategoryId: offer.subcategory_id,
+            price: offer.price,
+            description: offer.description,
+            location: offer.location,
+            offerStatus: transformStatus(offer.status),
+            promotion: offer.promotion_info,
+            profile: offer.profile,
+            createdAt: formatDate(offer.created_at),
+            updatedAt: formatDate(offer.updated_at),
+          })),
+        };
       }
       return null;
     },
@@ -68,7 +71,6 @@ export function useModerateOffer(options = {}) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["offers"],
-        exact: true,
       });
 
       if (options.onSuccess) {
