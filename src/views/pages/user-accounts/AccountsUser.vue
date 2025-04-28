@@ -248,32 +248,33 @@ function deleteAccount() {
         ></Column>
         <Column :exportable="false" style="min-width: 12rem">
           <template #body="slotProps">
-            <Button
-              icon="pi pi-trash"
-              outlined
-              rounded
-              severity="danger"
-              class="mr-2"
-              @click="confirmDeleteProduct(slotProps.data)"
-            />
-            <Button
-              v-if="slotProps.data.blocked === 'Активен'"
-              label="Заблокировать"
-              icon="pi pi-check"
-              severity="help"
-              outlined
-              @click="confirmBlock(slotProps.data)"
-              class="p-button-lg"
-            />
-            <Button
-              v-else
-              label="Разблокировать"
-              icon="pi pi-check"
-              severity="help"
-              outlined
-              @click="confirmUnblock(slotProps.data)"
-              class="p-button-lg"
-            />
+            <div class="flex items-center gap-x-2">
+              <Button
+                icon="pi pi-trash"
+                outlined
+                rounded
+                severity="danger"
+                @click="confirmDeleteProduct(slotProps.data)"
+              />
+              <Button
+                v-if="slotProps.data.blocked === 'Активен'"
+                label="Заблокировать"
+                icon="pi pi-check"
+                severity="help"
+                outlined
+                @click="confirmBlock(slotProps.data)"
+                class="p-button-lg"
+              />
+              <Button
+                v-else
+                label="Разблокировать"
+                icon="pi pi-check"
+                severity="help"
+                outlined
+                @click="confirmUnblock(slotProps.data)"
+                class="p-button-lg"
+              />
+            </div>
           </template>
         </Column>
       </DataTable>

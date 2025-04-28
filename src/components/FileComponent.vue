@@ -10,10 +10,10 @@ const props = defineProps({
   <div
     v-if="!download"
     class="w-[220px] h-[80px] rounded-lg p-4 flex gap-x-2 items-center justify-center border border-gray-600"
-    :class="{ 'w-[80px] h-[40px]': mini }"
+    :class="{ 'w-[120px] h-[40px]': mini }"
   >
     <span class="pi pi-file"></span>
-    <p class="text-sm">{{ file.filename }}</p>
+    <p class="text-sm text-ellipsis line-clamp-2 shrink-0 max-w-full">{{ file.filename }}</p>
   </div>
   <a
     v-else
@@ -22,7 +22,7 @@ const props = defineProps({
     download
   >
     <span class="pi pi-file"></span>
-    <p class="text-sm">{{ file.filename ?? file }}</p>
+    <p class="text-sm text-ellipsis line-clamp-1 shrink-0 max-w-40">{{ file.filename ?? file }}</p>
   </a>
 </template>
 

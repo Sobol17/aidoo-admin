@@ -14,6 +14,14 @@ import {
   useQueryClient,
 } from "@tanstack/vue-query";
 
+function getProfileType(profileType) {
+  if (profileType === "admin") return "Администратор";
+  if (profileType === "moderator") return "Модератор";
+  if (profileType === "support") return "Оператор техподдержки";
+  if (profileType === "employee") return "Сотрудник";
+  return "Неизвестно";
+}
+
 export function useAccounts(search = "", page = 1, limit = 1000) {
   const profileStore = useProfileStore();
   return useQuery({
@@ -28,7 +36,9 @@ export function useAccounts(search = "", page = 1, limit = 1000) {
         return accounts.map((account) => ({
           password: account.password,
           phone: account.phone,
-          roles: account.roles,
+          roles: account.roles.map(role => {
+            return getProfileType(role)
+          }),
           createdAt: formatDate(account.created_at),
           updatedAt: formatDate(account.updated_at),
           id: account._id,

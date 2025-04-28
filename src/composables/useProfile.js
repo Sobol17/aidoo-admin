@@ -12,6 +12,7 @@ export function useProfile(status = "all", page = 1, limit = 10) {
     select: (data) => {
       profileStore.profileID = data.documents[0]._id;
       profileStore.role = data.documents[0].profile_type;
+      profileStore.isProfileLoaded = true
       if (data && data.documents && data.documents.length > 0) {
         const profile = data.documents[0];
         return {

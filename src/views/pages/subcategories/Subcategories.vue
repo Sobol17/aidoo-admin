@@ -103,7 +103,7 @@ function saveNewSubcategory() {
   } else {
     createSubcategory({
       name: newSubcategory.value.name,
-      category: newSubcategory.value.parent.code,
+      category: parentCategory.code,
       is_premium: !!newSubcategory.value.isPremium,
       profile_id: profileStore.profileID,
     });
@@ -323,20 +323,6 @@ function rowClick(event) {
             fluid
           />
           <small v-if="submitted && !newSubcategory.name" class="text-red-500"
-            >Обязательное поле</small
-          >
-        </div>
-        <div class="mb-4">
-          <div class="block font-bold mb-3">Родительская категория</div>
-          <Select
-            v-model="newSubcategory.parent"
-            :options="categoriesData"
-            optionLabel="name"
-            placeholder="Выберите родительскую категорию"
-            class="w-full"
-            :invalid="submitted && !newSubcategory.parent"
-          />
-          <small v-if="submitted && !newSubcategory.parent" class="text-red-500"
             >Обязательное поле</small
           >
         </div>

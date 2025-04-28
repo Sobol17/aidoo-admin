@@ -29,12 +29,12 @@ const model = ref([
         to: "/subscriptions",
         roles: ["admin"],
       },
-      {
-        label: "Оформить нарушение",
-        icon: "pi pi-fw pi-ban",
-        to: "/report",
-        roles: ["admin", "moderator"],
-      },
+      // {
+      //   label: "Оформить нарушение",
+      //   icon: "pi pi-fw pi-ban",
+      //   to: "/report",
+      //   roles: ["admin", "moderator"],
+      // },
     ],
   },
   {

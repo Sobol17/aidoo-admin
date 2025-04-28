@@ -4,6 +4,7 @@ import Avatar from "primevue/avatar";
 import Button from "primevue/button";
 import { useProfileStore } from "@/stores/profile";
 import { useUploadFile } from "@/composables/useFiles";
+import FileComponent from "@/components/FileComponent.vue";
 
 const profileStore = useProfileStore();
 const props = defineProps({
@@ -59,7 +60,7 @@ function sendMessage() {
 
   emits("sendMessage", {
     text: trimmed,
-    attachments: imageUrls.value,
+    attachments: files.value,
   });
 
   newMessage.value = "";
@@ -73,11 +74,11 @@ function scrollToBottom() {
   }, 50);
 }
 
-const imageUrls = ref([]);
+const files = ref([]);
 
 const { mutate: uploadImage, isPending: isImageUploading } = useUploadFile({
   onSuccess: (data) => {
-    imageUrls.value.push(data._id);
+    files.value.push(data);
   },
 });
 
@@ -185,12 +186,11 @@ function onUploadImages(e) {
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-4 border-t grow">
-      <Image
-        v-for="src in imageUrls"
-        :src="'https://aidoo-test.ru/api-admin/files/' + src"
-        alt="Image"
-        class="shadow-md rounded-xl w-full size-auto sm:w-auto mt-4"
+    <div class="flex flex-wrap gap-4 border-t grow pt-4">
+      <FileComponent
+        v-for="file in files"
+        :file="file"
+        mini
       />
     </div>
     <div class="p-4 flex items-end gap-2">
@@ -210,7 +210,7 @@ function onUploadImages(e) {
         severity="secondary"
         class="p-button-outlined"
         chooseLabel="Вложение"
-        multiple
+        multiply
       />
       <Button
         label="Отправить"

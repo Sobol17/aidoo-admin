@@ -144,7 +144,7 @@ const expandedRows = ref([]);
           <template #body="slotProps">
             <Avatar
               v-if="slotProps.data.avatar"
-              :image="slotProps.data.avatar"
+              :image="'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar"
               shape="circle"
             />
             <div
