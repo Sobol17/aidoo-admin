@@ -1,6 +1,6 @@
 <script setup>
-const props = defineProps({
-  file: Object,
+defineProps({
+  file: [Object, String],
   download: Boolean,
   mini: Boolean,
 });
@@ -13,8 +13,11 @@ const props = defineProps({
     :class="{ 'w-[120px] h-[40px]': mini }"
   >
     <span class="pi pi-file"></span>
-    <p class="text-sm text-ellipsis line-clamp-2 shrink-0 max-w-full">{{ file.filename }}</p>
+    <p class="text-sm text-ellipsis line-clamp-2 shrink-0 max-w-full">
+      {{ file.filename }}
+    </p>
   </div>
+
   <a
     v-else
     :href="'https://aidoo-test.ru/api-admin/files/' + file"
@@ -22,7 +25,9 @@ const props = defineProps({
     download
   >
     <span class="pi pi-file"></span>
-    <p class="text-sm text-ellipsis line-clamp-1 shrink-0 max-w-40">{{ file.filename ?? file }}</p>
+    <p class="text-sm text-ellipsis line-clamp-1 shrink-0 max-w-40">
+      {{ file.filename ?? file }}
+    </p>
   </a>
 </template>
 

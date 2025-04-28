@@ -45,7 +45,7 @@ const expandedRows = ref([]);
 <template>
   <div>
     <div class="card">
-      <h2>Платежи</h2>
+      <h2>Логи</h2>
       <DataTable
         v-model:expanded-rows="expandedRows"
         ref="dt"

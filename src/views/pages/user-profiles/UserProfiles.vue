@@ -144,7 +144,9 @@ const expandedRows = ref([]);
           <template #body="slotProps">
             <Avatar
               v-if="slotProps.data.avatar"
-              :image="'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar"
+              :image="
+                'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar
+              "
               shape="circle"
             />
             <div
@@ -232,12 +234,19 @@ const expandedRows = ref([]);
             />
           </template>
         </Column>
+        <template #empty>
+          <div class="flex items-center justify-center">
+            <div class="text-gray-500 text-lg py-8">
+              Нет данных для отображения
+            </div>
+          </div>
+        </template>
         <template #expansion="slotProps">
           <div v-if="slotProps.data.partner" class="p-4">
             <h5>
               Информация о партнере {{ slotProps.data.partner.short_name }}
             </h5>
-            <DataTable :value="slotProps.data.partner">
+            <DataTable :value="[slotProps.data.partner]">
               <Column
                 field="short_name"
                 header="Краткое название"
@@ -254,22 +263,10 @@ const expandedRows = ref([]);
               <Column field="whatsapp" header="Whatsapp" sortable></Column>
               <Column field="telegram" header="Telegram" sortable></Column>
               <Column field="inn" header="ИНН" sortable></Column>
-              <Column headerStyle="width:4rem">
-                <template #body>
-                  <Button icon="pi pi-search" />
-                </template>
-              </Column>
             </DataTable>
           </div>
           <div v-else>
             <h5>Информация о партнере отсутствует</h5>
-          </div>
-        </template>
-        <template #empty>
-          <div class="flex items-center justify-center">
-            <div class="text-gray-500 text-lg py-8">
-              Нет данных для отображения
-            </div>
           </div>
         </template>
       </DataTable>

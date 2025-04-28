@@ -161,7 +161,7 @@ const expandedRows = ref([]);
           sortable
           style="min-width: 12rem"
         ></Column>
-        <Column field="Автор" header="price" sortable style="min-width: 8rem">
+        <Column field="author" header="Автор" sortable style="min-width: 8rem">
           <template #body="slotProps">
             <span v-if="slotProps.data.profile"
               >{{ slotProps.data.profile.first_name }}
@@ -276,14 +276,19 @@ const expandedRows = ref([]);
             v-model="reviewItem.comment"
             placeholder="Комментарий"
             class="w-full"
-            :invalid="
-              submitted &&
-              !reviewItem.comment &&
-              reviewItem.comment.length >= 30
-            "
+            :invalid="submitted && reviewItem.comment?.length <= 30"
           />
-          <p class="text-right">{{ reviewItem.comment?.length }} / 30</p>
-          <small v-if="submitted && !reviewItem.comment" class="text-red-500"
+          <p
+            class="text-right"
+            :class="{
+              'text-red-500': submitted && reviewItem.comment?.length <= 30,
+            }"
+          >
+            {{ reviewItem.comment?.length }} / 30
+          </p>
+          <small
+            v-if="submitted && reviewItem.comment?.length <= 30"
+            class="text-red-500"
             >Обязательное поле. Минимум 30 символов</small
           >
         </div>

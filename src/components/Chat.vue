@@ -45,22 +45,22 @@ function getAvatarUrl(id) {
   return `https://aidoo-test.ru/api-admin/files/${id}`;
 }
 
-const myTempMessage = ref(null);
+const myTempMessages = ref([]);
 
 function sendMessage() {
   const trimmed = newMessage.value.trim();
   if (!trimmed) return;
 
-  myTempMessage.value = {
+  myTempMessages.value.push({
     _id: Date.now().toString(),
     text: trimmed,
     timestamp: new Date().toISOString(),
     sender: { _id: profileStore.profileID, avatar_id: "my-avatar.png" },
-  };
+  });
 
   emits("sendMessage", {
     text: trimmed,
-    attachments: files.value,
+    attachments: files.value.map((file) => file._id),
   });
 
   newMessage.value = "";
@@ -135,19 +135,37 @@ function onUploadImages(e) {
         >
           <p v-if="message.text" class="break-words">{{ message.text }}</p>
 
-          <div v-if="message.attachments?.length" class="mt-2 space-y-2">
-            <a
+          <div
+            v-if="message.attachments?.length"
+            class="flex flex-col mt-2 space-y-2"
+          >
+            <FileComponent
               v-for="(attachment, index) in message.attachments"
-              :href="getImageUrl(attachment)"
+              :file="attachment"
+              mini
               download
-            >
-              <Image
-                :src="getImageUrl(attachment)"
-                alt="attachment"
-                width="50"
-                class="rounded-lg max-w-full max-h-60 object-cover"
-              />
-            </a>
+            />
+          </div>
+
+          <p class="text-xs text-right mt-1 opacity-70">
+            {{ formatTime(message.timestamp) }}
+          </p>
+        </div>
+      </div>
+      <!--Отправленное сообщение-->
+      <div v-for="message in myTempMessages" class="flex items-end justify-end">
+        <div
+          class="max-w-xs px-4 py-2 rounded-lg shadow-sm bg-primary-500 text-white rounded-br-none"
+        >
+          <p class="break-words">{{ message.text }}</p>
+
+          <div v-if="message.attachments?.length" class="mt-2 space-y-2">
+            <FileComponent
+              v-for="(attachment, index) in message.attachments"
+              :file="attachment"
+              mini
+              download
+            />
           </div>
 
           <p class="text-xs text-right mt-1 opacity-70">
@@ -157,41 +175,9 @@ function onUploadImages(e) {
       </div>
     </div>
     <div class="text-center text-lg my-10" v-else>Сообщения отсутствуют</div>
-    <!--Отправленное сообщение-->
-    <div v-if="myTempMessage" class="flex items-end mb-4 mr-4 justify-end">
-      <!-- Сообщение -->
-      <div
-        class="max-w-xs px-4 py-2 rounded-lg shadow-sm bg-primary-500 text-white rounded-br-none"
-      >
-        <p class="break-words">{{ myTempMessage.text }}</p>
-
-        <div v-if="myTempMessage.attachments?.length" class="mt-2 space-y-2">
-          <a
-            v-for="(attachment, index) in myTempMessage.attachments"
-            :href="getImageUrl(attachment)"
-            download
-          >
-            <Image
-              :src="getImageUrl(attachment)"
-              alt="attachment"
-              width="50"
-              class="rounded-lg max-w-full max-h-60 object-cover"
-            />
-          </a>
-        </div>
-
-        <p class="text-xs text-right mt-1 opacity-70">
-          {{ formatTime(myTempMessage.timestamp) }}
-        </p>
-      </div>
-    </div>
 
     <div class="flex flex-wrap gap-4 border-t grow pt-4">
-      <FileComponent
-        v-for="file in files"
-        :file="file"
-        mini
-      />
+      <FileComponent v-for="file in files" :file="file" mini />
     </div>
     <div class="p-4 flex items-end gap-2">
       <Textarea
@@ -210,7 +196,7 @@ function onUploadImages(e) {
         severity="secondary"
         class="p-button-outlined"
         chooseLabel="Вложение"
-        multiply
+        multiple
       />
       <Button
         label="Отправить"
