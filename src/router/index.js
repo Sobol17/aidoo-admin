@@ -9,8 +9,12 @@ import Advertising from '@/views/pages/advertising/Advertising.vue'
 import Access from '@/views/pages/auth/Access.vue'
 import Error from '@/views/pages/auth/Error.vue'
 import Login from '@/views/pages/auth/Login.vue'
+import CityComponent from '@/views/pages/cities/CityComponent.vue'
+import CityTable from '@/views/pages/cities/CityTable.vue'
 import Complaints from '@/views/pages/complaints/Complaints.vue'
 import Content from '@/views/pages/content/Content.vue'
+import FaqComponent from '@/views/pages/faq/FaqComponent.vue'
+import FaqTable from '@/views/pages/faq/FaqTable.vue'
 import Offers from '@/views/pages/offers/Offers.vue'
 import Orders from '@/views/pages/orders/Orders.vue'
 import Profile from '@/views/pages/Profile.vue'
@@ -21,7 +25,9 @@ import Subcategories from '@/views/pages/subcategories/Subcategories.vue'
 import Subcategory from '@/views/pages/subcategories/Subcategory.vue'
 import Subs from '@/views/pages/subs/Subs.vue'
 import Support from '@/views/pages/support/Support.vue'
+import Taxes from '@/views/pages/taxes/Taxes.vue'
 import AccountsUser from '@/views/pages/user-accounts/AccountsUser.vue'
+import UserProfile from '@/views/pages/user-profiles/UserProfile.vue'
 import UserProfiles from '@/views/pages/user-profiles/UserProfiles.vue'
 import { watch } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -47,6 +53,12 @@ const router = createRouter({
 					name: 'subscriptions',
 					meta: { roles: ['admin'] },
 					component: Subs,
+				},
+				{
+					path: '/taxes',
+					name: 'taxes',
+					meta: { roles: ['admin'] },
+					component: Taxes,
 				},
 				{
 					path: '/admin-accounts',
@@ -77,6 +89,12 @@ const router = createRouter({
 					name: 'user-profiles',
 					meta: { roles: ['admin', 'moderator'] },
 					component: UserProfiles,
+				},
+				{
+					path: '/user-profiles/:id',
+					name: 'user-profile',
+					meta: { roles: ['admin', 'moderator'] },
+					component: UserProfile,
 				},
 				{
 					path: '/advertising',
@@ -131,6 +149,30 @@ const router = createRouter({
 					name: 'profile',
 					meta: { roles: ['admin', 'moderator', 'support'] },
 					component: Profile,
+				},
+				{
+					path: '/faq',
+					name: 'faq',
+					meta: { roles: ['admin', 'moderator', 'support'] },
+					component: FaqTable,
+				},
+				{
+					path: '/faq/:id',
+					name: 'faq-id',
+					meta: { roles: ['admin', 'moderator', 'support'] },
+					component: FaqComponent,
+				},
+				{
+					path: '/cities',
+					name: 'cities',
+					meta: { roles: ['admin', 'moderator', 'support'] },
+					component: CityTable,
+				},
+				{
+					path: '/cities/:id',
+					name: 'cities-id',
+					meta: { roles: ['admin', 'moderator', 'support'] },
+					component: CityComponent,
 				},
 				{
 					path: '/categories',

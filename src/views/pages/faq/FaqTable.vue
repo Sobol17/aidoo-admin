@@ -173,7 +173,7 @@ function rowClick(event) {
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
-						<h4 class="m-0">Профили (МП)</h4>
+						<h4 class="m-0">FAQ</h4>
 						<div class="flex gap-x-2">
 							<Select
 								v-model="profileTypeFilter"
@@ -260,20 +260,20 @@ function rowClick(event) {
 					style="min-width: 10rem"
 				></Column>
 				<Column
-					field="hasAgreement"
-					header="Соглашение на рекламу"
+					field="id"
+					header="ID профиля"
 					sortable
 					style="min-width: 16rem"
 				></Column>
 				<Column
-					field="id"
-					header="ID профиля"
+					field="createdAt"
+					header="Дата создания"
 					sortable
 					style="min-width: 12rem"
 				></Column>
 				<Column
-					field="createdAt"
-					header="Дата создания"
+					field="updatedAt"
+					header="Дата обновления"
 					sortable
 					style="min-width: 12rem"
 				></Column>

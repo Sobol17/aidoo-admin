@@ -57,7 +57,7 @@ const statusOptions = ref([
 	{ name: 'Заблокирован', code: 'rejected' },
 ])
 
-const newProfile = ref({
+const newCity = ref({
 	firstName: '',
 	lastName: '',
 	phone: '',
@@ -91,11 +91,11 @@ function saveNewProfile() {
 	submitted.value = true
 
 	moderateProfile({
-		id: newProfile.value.id,
+		id: newCity.value.id,
 		moderationData: {
 			profile_id: profileStore.profileID,
-			status: newProfile.value.status.code,
-			moderation_comment: newProfile.value.comment,
+			status: newCity.value.status.code,
+			moderation_comment: newCity.value.comment,
 		},
 	})
 }
@@ -103,7 +103,7 @@ function saveNewProfile() {
 const submitted = ref(false)
 
 function openNew(event) {
-	newProfile.value = {
+	newCity.value = {
 		firstName: '',
 		lastName: '',
 		phone: '',
@@ -173,7 +173,7 @@ function rowClick(event) {
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
-						<h4 class="m-0">Профили (МП)</h4>
+						<h4 class="m-0">Города</h4>
 						<div class="flex gap-x-2">
 							<Select
 								v-model="profileTypeFilter"
@@ -260,20 +260,20 @@ function rowClick(event) {
 					style="min-width: 10rem"
 				></Column>
 				<Column
-					field="hasAgreement"
-					header="Соглашение на рекламу"
+					field="id"
+					header="ID профиля"
 					sortable
 					style="min-width: 16rem"
 				></Column>
 				<Column
-					field="id"
-					header="ID профиля"
+					field="createdAt"
+					header="Дата создания"
 					sortable
 					style="min-width: 12rem"
 				></Column>
 				<Column
-					field="createdAt"
-					header="Дата создания"
+					field="updatedAt"
+					header="Дата обновления"
 					sortable
 					style="min-width: 12rem"
 				></Column>
@@ -338,27 +338,27 @@ function rowClick(event) {
 				<div>
 					<div class="block font-bold mb-3">Статус профиля</div>
 					<Select
-						v-model="newProfile.status"
+						v-model="newCity.status"
 						:options="statusOptions"
 						optionLabel="name"
 						placeholder="Выберите статус"
 						class="w-full"
-						:invalid="submitted && !newProfile.status"
+						:invalid="submitted && !newCity.status"
 					/>
-					<small v-if="submitted && !newProfile.status" class="text-red-500"
+					<small v-if="submitted && !newCity.status" class="text-red-500"
 						>Обязательное поле</small
 					>
 				</div>
 				<div>
 					<div class="block font-bold mb-3">Комментарий модератора</div>
 					<Textarea
-						v-model="newProfile.comment"
+						v-model="newCity.comment"
 						placeholder="Комментарий"
 						class="w-full"
-						:invalid="submitted && !newProfile.comment"
+						:invalid="submitted && !newCity.comment"
 					/>
-					<p class="text-right">{{ newProfile.comment?.length }} / 30</p>
-					<small v-if="submitted && !newProfile.comment" class="text-red-500"
+					<p class="text-right">{{ newCity.comment?.length }} / 30</p>
+					<small v-if="submitted && !newCity.comment" class="text-red-500"
 						>Обязательное поле. Минимум 30 символов</small
 					>
 				</div>

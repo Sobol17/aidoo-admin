@@ -9,7 +9,7 @@ import { computed, ref } from 'vue'
 
 const profileStore = useProfileStore()
 
-const selectedSubStatus = ref({ name: 'Все', code: 'all' })
+const selectedOrderStatus = ref({ name: 'Все', code: 'all' })
 
 const statusOptions = ref([
 	{ name: 'Все', code: 'all' },
@@ -23,7 +23,7 @@ const first = ref(0)
 const limit = ref(7)
 
 const { data: subsData, isLoading: isLoadingReviews } = useSubs(
-	selectedSubStatus,
+	selectedOrderStatus,
 	search,
 	page,
 	limit
@@ -33,8 +33,7 @@ const subs = computed(() => {
 	return subsData?.value || []
 })
 
-const toast = useToast()
-const dt = ref()
+const dt = ref(null)
 
 const filters = ref({
 	global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -64,7 +63,7 @@ const handleSearch = debounce(event => {
 <template>
 	<div>
 		<div class="card">
-			<h3>Подписки</h3>
+			<h3>Настройка тарифов</h3>
 			<DataTable
 				v-model:expanded-rows="expandedRows"
 				ref="dt"
@@ -88,7 +87,7 @@ const handleSearch = debounce(event => {
 						<h4 class="m-0">Всего: {{ subs.count }}</h4>
 						<div class="flex items-center gap-x-2">
 							<Select
-								v-model="selectedSubStatus"
+								v-model="selectedOrderStatus"
 								:options="statusOptions"
 								optionLabel="name"
 								placeholder="Активность"
