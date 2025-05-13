@@ -2,19 +2,13 @@
 import FileComponent from '@/components/FileComponent.vue'
 import { useUploadFile } from '@/composables/useFiles'
 import { useProfileStore } from '@/stores/profile'
+import { useToast } from 'primevue'
 import Avatar from 'primevue/avatar'
 import Button from 'primevue/button'
 import { ref } from 'vue'
 
 const profileStore = useProfileStore()
-const props = defineProps({
-	messages: Array,
-})
 const emits = defineEmits(['sendMessage'])
-
-function getImageUrl(id) {
-	return `https://aidoo-test.ru/api-admin/files/${id}`
-}
 
 const newMessage = ref('')
 
@@ -31,7 +25,7 @@ function formatTime(timestamp) {
 			day: 'numeric',
 			month: 'short',
 		})
-		.replace('.', '') // убираем точку после месяца
+		.replace('.', '')
 
 	const formattedTime = date.toLocaleTimeString('ru-RU', {
 		hour: '2-digit',
@@ -76,11 +70,13 @@ function scrollToBottom() {
 
 const files = ref([])
 
-const { mutate: uploadImage, isPending: isImageUploading } = useUploadFile({
+const { mutate: uploadImage } = useUploadFile({
 	onSuccess: data => {
 		files.value.push(data)
 	},
 })
+
+const toast = useToast()
 
 function onUploadImages(e) {
 	for (const item of e.files) {
@@ -141,6 +137,7 @@ function onUploadImages(e) {
 					>
 						<FileComponent
 							v-for="(attachment, index) in message.attachments"
+							:key="index"
 							:file="attachment"
 							mini
 							download
@@ -153,7 +150,11 @@ function onUploadImages(e) {
 				</div>
 			</div>
 			<!--Отправленное сообщение-->
-			<div v-for="message in myTempMessages" class="flex items-end justify-end">
+			<div
+				v-for="message in myTempMessages"
+				:key="message"
+				class="flex items-end justify-end"
+			>
 				<div
 					class="max-w-xs px-4 py-2 rounded-lg shadow-sm bg-primary-500 text-white rounded-br-none"
 				>
@@ -162,6 +163,7 @@ function onUploadImages(e) {
 					<div v-if="message.attachments?.length" class="mt-2 space-y-2">
 						<FileComponent
 							v-for="(attachment, index) in message.attachments"
+							:key="index"
 							:file="attachment"
 							mini
 							download
@@ -177,7 +179,7 @@ function onUploadImages(e) {
 		<div class="text-center text-lg my-10" v-else>Сообщения отсутствуют</div>
 
 		<div class="flex flex-wrap gap-4 border-t grow pt-4">
-			<FileComponent v-for="file in files" :file="file" mini />
+			<FileComponent v-for="file in files" :key="file" :file="file" mini />
 		</div>
 		<div class="p-4 flex items-end gap-2">
 			<Textarea

@@ -1,124 +1,153 @@
 <script setup>
-import {
-	useModerateUserProfiles,
-	useUserProfiles,
-} from '@/composables/useUserProfiles'
+import { useCities, useCreateCity, useDeleteCity, useUpdateCity } from '@/composables/useCities'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 const profileStore = useProfileStore()
 
-const userStatuses = [
-	{ name: 'Все', code: 'all' },
-	{ name: 'Активные', code: 'actived' },
-	{ name: 'На модерации', code: 'modetation' },
-	{ name: 'Отклоненные', code: 'rejected' },
+const cityStatus = [
+	{ name: 'Активен', code: 'actived' },
+	{ name: 'Неактивен', code: 'inactive' },
 ]
 
-const userProfileTypes = [
-	{ name: 'Все', code: 'all' },
-	{ name: 'Партнер', code: 'partner' },
-	{ name: 'Клиент', code: 'client' },
-]
-
-const status = ref({ code: 'all' })
-const profileTypeFilter = ref({ code: 'all' })
 const search = ref('')
 const page = ref(1)
 const first = ref(0)
 const limit = ref(7)
 
-const { data: profilesData, isLoading: isLoadingProfiles } = useUserProfiles(
-	status,
-	profileTypeFilter,
-	search,
-	page,
-	limit
-)
+const deleteCityDialog = ref(false)
+const cityDialog = ref(false)
 
-const profiles = computed(() => {
-	return profilesData?.value || []
+const { data: citiesData, isLoading: isLoadingCities } = useCities(search, page, limit)
+
+const cities = computed(() => {
+	return citiesData?.value || []
 })
 
 const toast = useToast()
 const dt = ref()
-const profileDialog = ref(false)
+const isEdit = ref(false)
 
 const filters = ref({
 	global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
 
-const statusOptions = ref([
-	{ name: 'Активный', code: 'actived' },
-	{ name: 'Заблокирован', code: 'rejected' },
-])
+const newCity = ref({})
 
-const newCity = ref({
-	firstName: '',
-	lastName: '',
-	phone: '',
-	city: '',
-	accountId: '',
-	profileType: '',
+const { mutate: createCity, isPending: creatingCity } = useCreateCity({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Город успешно добавлен',
+			life: 3000,
+		})
+		hideDialog()
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Город уже существует',
+			life: 3000,
+		})
+	},
 })
 
-const { mutate: moderateProfile, isPending: moderationPending } =
-	useModerateUserProfiles({
-		onSuccess: () => {
-			toast.add({
-				severity: 'success',
-				summary: 'Успех',
-				detail: 'Информация о профиле изменена',
-				life: 3000,
-			})
-			hideDialog()
-		},
-		onError: error => {
-			toast.add({
-				severity: 'error',
-				summary: 'Ошибка',
-				detail: 'Не удалось изменить информацию о профиле',
-				life: 3000,
-			})
-		},
-	})
+const { mutate: updateCity, isPending: updatingCity } = useUpdateCity({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Информация о городе обновлена',
+			life: 3000,
+		})
+		hideDialog()
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Произошла ошибка',
+			life: 3000,
+		})
+	},
+})
 
-function saveNewProfile() {
+function saveNewCity() {
 	submitted.value = true
-
-	moderateProfile({
-		id: newCity.value.id,
-		moderationData: {
+	if (isEdit.value) {
+		updateCity({
+			id: newCity.value.id,
+			city: {
+				status: newCity.value.status.code,
+				profile_id: profileStore.profileID,
+			},
+		})
+	} else {
+		createCity({
+			name: newCity.value.name,
 			profile_id: profileStore.profileID,
-			status: newCity.value.status.code,
-			moderation_comment: newCity.value.comment,
-		},
-	})
+		})
+	}
 }
 
 const submitted = ref(false)
 
-function openNew(event) {
-	newCity.value = {
-		firstName: '',
-		lastName: '',
-		phone: '',
-		city: '',
-		accountId: event.data.accountId,
-		profileType: '',
-		id: event.data.id,
-	}
+function openNew() {
+	newCity.value = {}
 	submitted.value = false
-	profileDialog.value = true
+	cityDialog.value = true
 }
 
 function hideDialog() {
-	profileDialog.value = false
+	cityDialog.value = false
+	deleteCityDialog.value = false
+	isEdit.value = false
 	submitted.value = false
+}
+
+function editCity(city) {
+	isEdit.value = true
+	newCity.value = {
+		...city,
+		status: cityStatus.find(s => s.name === city.status),
+	}
+	cityDialog.value = true
+}
+
+const { mutate: deleteCity, isPending: isDeletingCity } = useDeleteCity({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Город успешно удален',
+			life: 3000,
+		})
+		hideDialog()
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Произошла ошибка',
+			life: 3000,
+		})
+	},
+})
+
+function handleDeleteDialog() {
+	deleteCity(newCity.value.id)
+	hideDialog()
+}
+
+function confirmDeleteCity(city) {
+	newCity.value.id = city.id
+	newCity.value.name = city.name
+	deleteCityDialog.value = true
 }
 
 const expandedRows = ref([])
@@ -139,35 +168,37 @@ function handleChangeLimit(newLimit) {
 const handleSearch = debounce(event => {
 	search.value = event.target.value
 }, 500)
-
-const router = useRouter()
-
-function rowClick(event) {
-	router.push(`/user-profiles/${event.data.id}`)
-}
 </script>
 
 <template>
 	<div>
 		<div class="card">
+			<Toolbar class="mb-6">
+				<template #end>
+					<Button
+						label="Добавить"
+						icon="pi pi-plus"
+						severity="secondary"
+						class="mr-2"
+						@click="openNew"
+					/>
+				</template>
+			</Toolbar>
 			<DataTable
 				v-model:expandedRows="expandedRows"
 				ref="dt"
-				:value="profiles.items"
+				:value="cities.items"
 				stripedRows
 				dataKey="id"
 				:paginator="true"
 				:rows="limit"
-				:total-records="profiles.count"
+				:total-records="cities.count"
 				:lazy="true"
 				:filters="filters"
 				paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
 				:rowsPerPageOptions="[7, 10, 25]"
-				:currentPageReportTemplate="`{first} до {last} из ${profiles.count} элементов`"
-				:rowHover="true"
-				selectionMode="single"
-				:loading="isLoadingProfiles"
-				@rowClick="rowClick"
+				:currentPageReportTemplate="`{first} до {last} из ${cities.count} элементов`"
+				:loading="isLoadingCities"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
 			>
@@ -175,20 +206,6 @@ function rowClick(event) {
 					<div class="flex flex-wrap gap-2 items-center justify-between">
 						<h4 class="m-0">Города</h4>
 						<div class="flex gap-x-2">
-							<Select
-								v-model="profileTypeFilter"
-								:options="userProfileTypes"
-								optionLabel="name"
-								placeholder="Выберите роль"
-								class="w-full"
-							/>
-							<Select
-								v-model="status"
-								:options="userStatuses"
-								optionLabel="name"
-								placeholder="Выберите статус"
-								class="w-full"
-							/>
 							<IconField>
 								<InputIcon>
 									<i class="pi pi-search" />
@@ -199,174 +216,119 @@ function rowClick(event) {
 					</div>
 				</template>
 
-				<Column expander style="width: 5rem" />
-
-				<Column field="avatar" header="Аватар" sortable style="min-width: 8rem">
-					<template #body="slotProps">
-						<Avatar
-							v-if="slotProps.data.avatar"
-							:image="
-								'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar
-							"
-							shape="circle"
-						/>
-						<div
-							v-else
-							class="flex items-center justify-center size-10 bg-gray-200 rounded-full"
-						>
-							<i class="pi pi-user" />
-						</div>
-					</template>
-				</Column>
-				<Column
-					field="accountId"
-					header="Аккаунт (ID)"
-					sortable
-					style="min-width: 12rem"
-				></Column>
-				<Column
-					field="phone"
-					header="Телефон"
-					sortable
-					style="min-width: 12rem"
-				></Column>
-				<Column
-					field="firstName"
-					header="Имя"
-					sortable
-					style="min-width: 8rem"
-				></Column>
-				<Column
-					field="lastName"
-					header="Фамилия"
-					sortable
-					style="min-width: 10rem"
-				></Column>
-				<Column
-					field="city"
-					header="Город"
-					sortable
-					style="min-width: 10rem"
-				></Column>
-				<Column
-					field="status"
-					header="Статус"
-					sortable
-					style="min-width: 10rem"
-				></Column>
-				<Column
-					field="profileType"
-					header="Роль"
-					style="min-width: 10rem"
-				></Column>
-				<Column
-					field="id"
-					header="ID профиля"
-					sortable
-					style="min-width: 16rem"
-				></Column>
-				<Column
-					field="createdAt"
-					header="Дата создания"
-					sortable
-					style="min-width: 12rem"
-				></Column>
-				<Column
-					field="updatedAt"
-					header="Дата обновления"
-					sortable
-					style="min-width: 12rem"
-				></Column>
+				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
+				<Column field="name" header="Название города" sortable style="min-width: 12rem"></Column>
+				<Column field="status" header="Статус" sortable style="min-width: 8rem"></Column>
+				<Column field="lat" header="Широта" sortable style="min-width: 10rem"></Column>
+				<Column field="lon" header="Долгота" sortable style="min-width: 10rem"></Column>
+				<Column field="status" header="Статус" sortable style="min-width: 10rem"></Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<Button
-							icon="pi pi-file-edit"
-							class="mr-2"
+							icon="pi pi-pencil"
 							outlined
-							label="Модерирование"
-							severity="help"
-							@click="openNew(slotProps)"
+							rounded
+							class="mr-2"
+							@click="editCity(slotProps.data)"
+						/>
+						<Button
+							icon="pi pi-trash"
+							outlined
+							rounded
+							severity="danger"
+							@click="confirmDeleteCity(slotProps.data)"
 						/>
 					</template>
 				</Column>
 				<template #empty>
 					<div class="flex items-center justify-center">
-						<div class="text-gray-500 text-lg py-8">
-							Нет данных для отображения
-						</div>
-					</div>
-				</template>
-				<template #expansion="slotProps">
-					<div v-if="slotProps.data.partner" class="p-4">
-						<h5>
-							Информация о партнере {{ slotProps.data.partner.short_name }}
-						</h5>
-						<DataTable :value="[slotProps.data.partner]">
-							<Column
-								field="short_name"
-								header="Краткое название"
-								sortable
-							></Column>
-							<Column
-								field="full_name"
-								header="Полное название"
-								sortable
-							></Column>
-							<Column field="phone" header="Телефон" sortable></Column>
-							<Column field="city" header="Город" sortable></Column>
-							<Column field="email" header="Email" sortable></Column>
-							<Column field="whatsapp" header="Whatsapp" sortable></Column>
-							<Column field="telegram" header="Telegram" sortable></Column>
-							<Column field="inn" header="ИНН" sortable></Column>
-						</DataTable>
-					</div>
-					<div v-else>
-						<h5>Информация о партнере отсутствует</h5>
+						<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
 					</div>
 				</template>
 			</DataTable>
 		</div>
 
-		<!-- Диалог для модерирования профиля -->
+		<!-- Диалог для редактирования профиля -->
 		<Dialog
-			v-model:visible="profileDialog"
+			v-model:visible="cityDialog"
 			:style="{ width: '450px' }"
-			header="Модерирование профиля (МП)"
+			header="Информация о городе"
 			:modal="true"
 		>
 			<div class="flex flex-col gap-6">
-				<div>
-					<div class="block font-bold mb-3">Статус профиля</div>
+				<div v-if="isEdit">
+					<label for="name" class="block font-bold mb-3">Название города</label>
+					<InputText
+						id="name"
+						v-model.trim="newCity.name"
+						required="true"
+						autofocus
+						:invalid="submitted && !newCity.name"
+						fluid
+						disabled
+					/>
+					<small v-if="submitted && !newCity.name" class="text-red-500">Обязательное поле</small>
+				</div>
+				<div v-if="isEdit">
+					<label for="name" class="block font-bold mb-3">Статус</label>
 					<Select
 						v-model="newCity.status"
-						:options="statusOptions"
+						:options="cityStatus"
 						optionLabel="name"
 						placeholder="Выберите статус"
 						class="w-full"
-						:invalid="submitted && !newCity.status"
 					/>
-					<small v-if="submitted && !newCity.status" class="text-red-500"
-						>Обязательное поле</small
-					>
+					<small v-if="submitted && !newCity.name" class="text-red-500">Обязательное поле</small>
 				</div>
-				<div>
-					<div class="block font-bold mb-3">Комментарий модератора</div>
-					<Textarea
-						v-model="newCity.comment"
-						placeholder="Комментарий"
-						class="w-full"
-						:invalid="submitted && !newCity.comment"
+				<div v-if="!isEdit">
+					<label for="name" class="block font-bold mb-3">Название города</label>
+					<InputText
+						id="city"
+						v-model.trim="newCity.name"
+						required="true"
+						autofocus
+						:invalid="submitted && !newCity.name"
+						fluid
 					/>
-					<p class="text-right">{{ newCity.comment?.length }} / 30</p>
-					<small v-if="submitted && !newCity.comment" class="text-red-500"
-						>Обязательное поле. Минимум 30 символов</small
-					>
+					<small v-if="submitted && !newCity.name" class="text-red-500">Обязательное поле</small>
 				</div>
 			</div>
 
 			<template #footer>
-				<Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
-				<Button label="Сохранить" icon="pi pi-check" @click="saveNewProfile" />
+				<Button
+					label="Отменить"
+					icon="pi pi-times"
+					text
+					@click="hideDialog"
+					:loading="updatingCity || creatingCity"
+				/>
+				<Button
+					label="Сохранить"
+					icon="pi pi-check"
+					@click="saveNewCity"
+					:loading="updatingCity || creatingCity"
+				/>
+			</template>
+		</Dialog>
+
+		<Dialog
+			v-model:visible="deleteCityDialog"
+			:style="{ width: '450px' }"
+			header="Подтверждение"
+			:modal="true"
+		>
+			<div class="flex items-center gap-4">
+				<i class="pi pi-exclamation-triangle !text-3xl" />
+				Вы уверены, что хотите удалить город {{ newCity.name }}?
+			</div>
+			<template #footer>
+				<Button label="Нет" icon="pi pi-times" text @click="deleteCityDialog = false" />
+				<Button
+					label="Да"
+					icon="pi pi-check"
+					@click="handleDeleteDialog"
+					:loading="isDeletingCity"
+				/>
 			</template>
 		</Dialog>
 	</div>
