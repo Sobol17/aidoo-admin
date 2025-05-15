@@ -16,6 +16,7 @@ import Content from '@/views/pages/content/Content.vue'
 import FaqComponent from '@/views/pages/faq/FaqComponent.vue'
 import FaqTable from '@/views/pages/faq/FaqTable.vue'
 import Offers from '@/views/pages/offers/Offers.vue'
+import OfferView from '@/views/pages/offers/OfferView.vue'
 import Orders from '@/views/pages/orders/Orders.vue'
 import Profile from '@/views/pages/Profile.vue'
 import Promocodes from '@/views/pages/promo/Promocodes.vue'
@@ -107,6 +108,12 @@ const router = createRouter({
 					name: 'offers',
 					meta: { roles: ['admin', 'moderator'] },
 					component: Offers,
+				},
+				{
+					path: '/offers/:id',
+					name: 'offers-id',
+					meta: { roles: ['admin', 'moderator'] },
+					component: OfferView,
 				},
 				{
 					path: '/reviews',
