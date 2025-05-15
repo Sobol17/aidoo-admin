@@ -25,7 +25,7 @@ import Subcategories from '@/views/pages/subcategories/Subcategories.vue'
 import Subcategory from '@/views/pages/subcategories/Subcategory.vue'
 import Subs from '@/views/pages/subs/Subs.vue'
 import Support from '@/views/pages/support/Support.vue'
-import Taxes from '@/views/pages/taxes/Taxes.vue'
+import TaxTable from '@/views/pages/taxes/TaxTable.vue'
 import AccountsUser from '@/views/pages/user-accounts/AccountsUser.vue'
 import UserProfile from '@/views/pages/user-profiles/UserProfile.vue'
 import UserProfiles from '@/views/pages/user-profiles/UserProfiles.vue'
@@ -58,7 +58,7 @@ const router = createRouter({
 					path: '/taxes',
 					name: 'taxes',
 					meta: { roles: ['admin'] },
-					component: Taxes,
+					component: TaxTable,
 				},
 				{
 					path: '/admin-accounts',
@@ -225,10 +225,7 @@ router.beforeEach((to, from, next) => {
 		return
 	}
 
-	if (
-		!isAuthenticated &&
-		!['login', 'accessDenied', 'error'].includes(to.name)
-	) {
+	if (!isAuthenticated && !['login', 'accessDenied', 'error'].includes(to.name)) {
 		next({ name: 'accessDenied' })
 		return
 	}
