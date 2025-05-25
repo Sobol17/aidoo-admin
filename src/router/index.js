@@ -30,6 +30,7 @@ import TaxTable from '@/views/pages/taxes/TaxTable.vue'
 import AccountsUser from '@/views/pages/user-accounts/AccountsUser.vue'
 import UserProfile from '@/views/pages/user-profiles/UserProfile.vue'
 import UserProfiles from '@/views/pages/user-profiles/UserProfiles.vue'
+import ViolationsTable from '@/views/pages/violations/ViolationsTable.vue'
 import { watch } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -154,32 +155,38 @@ const router = createRouter({
 				{
 					path: '/profile',
 					name: 'profile',
-					meta: { roles: ['admin', 'moderator', 'support'] },
+					meta: { roles: ['admin', 'moderator'] },
 					component: Profile,
 				},
 				{
 					path: '/faq',
 					name: 'faq',
-					meta: { roles: ['admin', 'moderator', 'support'] },
+					meta: { roles: ['admin', 'moderator'] },
 					component: FaqTable,
 				},
 				{
 					path: '/faq/:id',
 					name: 'faq-id',
-					meta: { roles: ['admin', 'moderator', 'support'] },
+					meta: { roles: ['admin', 'moderator'] },
 					component: FaqComponent,
 				},
 				{
 					path: '/cities',
 					name: 'cities',
-					meta: { roles: ['admin', 'moderator', 'support'] },
+					meta: { roles: ['admin', 'moderator'] },
 					component: CityTable,
 				},
 				{
 					path: '/cities/:id',
 					name: 'cities-id',
-					meta: { roles: ['admin', 'moderator', 'support'] },
+					meta: { roles: ['admin', 'moderator'] },
 					component: CityComponent,
+				},
+				{
+					path: '/violations',
+					name: 'violations',
+					meta: { roles: ['admin', 'moderator', 'support'] },
+					component: ViolationsTable,
 				},
 				{
 					path: '/categories',

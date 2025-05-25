@@ -35,12 +35,12 @@ const model = ref([
 				to: '/taxes',
 				roles: ['admin'],
 			},
-			// {
-			//   label: "Оформить нарушение",
-			//   icon: "pi pi-fw pi-ban",
-			//   to: "/report",
-			//   roles: ["admin", "moderator"],
-			// },
+			{
+				label: 'Оформить нарушения',
+				icon: 'pi pi-fw pi-ban',
+				to: '/violations',
+				roles: ['admin', 'moderator'],
+			},
 		],
 	},
 	{
@@ -130,9 +130,7 @@ const model = ref([
 
 const filteredMenu = computed(() => {
 	return model.value
-		.filter(
-			section => !section.roles || section.roles.includes(profileStore.role)
-		)
+		.filter(section => !section.roles || section.roles.includes(profileStore.role))
 		.map(section => {
 			const filteredItems = (section.items || []).filter(
 				item => !item.roles || item.roles.includes(profileStore.role)
@@ -149,11 +147,7 @@ const filteredMenu = computed(() => {
 <template>
 	<ul class="layout-menu">
 		<template v-for="(item, i) in filteredMenu" :key="item">
-			<app-menu-item
-				v-if="!item.separator"
-				:item="item"
-				:index="i"
-			></app-menu-item>
+			<app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
 			<li v-if="item.separator" class="menu-separator"></li>
 		</template>
 	</ul>
