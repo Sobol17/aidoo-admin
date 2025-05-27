@@ -1,8 +1,5 @@
 <script setup>
-import {
-	useAccountById,
-	useUpdateAccount,
-} from '@/composables/useAdminAccounts'
+import { useAccountById, useUpdateAccount } from '@/composables/useAdminAccounts'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -40,25 +37,24 @@ const formatDate = dateString => {
 	}).format(date)
 }
 
-const { mutate: updateAccount, isPending: isUpdatingAccount } =
-	useUpdateAccount({
-		onSuccess: () => {
-			toast.add({
-				severity: 'success',
-				summary: 'Успех',
-				detail: 'Аккаунт успешно обновлен',
-				life: 3000,
-			})
-		},
-		onError: error => {
-			toast.add({
-				severity: 'error',
-				summary: 'Ошибка',
-				detail: 'Не удалось обновить аккаунт',
-				life: 3000,
-			})
-		},
-	})
+const { mutate: updateAccount, isPending: isUpdatingAccount } = useUpdateAccount({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Аккаунт успешно обновлен',
+			life: 3000,
+		})
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Не удалось обновить аккаунт',
+			life: 3000,
+		})
+	},
+})
 
 const isFormCorrect = computed(() => {
 	return correctFields.value.length === Object.keys(formFields.value).length
@@ -78,17 +74,11 @@ const moderateProfile = () => {}
 <template>
 	<div class="account-container">
 		<Toast />
-		<div
-			v-if="isLoadingProfile"
-			class="flex justify-content-center align-items-center pt-5"
-		>
+		<div v-if="isLoadingProfile" class="flex justify-content-center align-items-center pt-5">
 			<ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" />
 			<span class="ml-3 font-bold">Загрузка данных...</span>
 		</div>
-		<div
-			v-else-if="!userData"
-			class="flex justify-content-center align-items-center pt-5"
-		>
+		<div v-else-if="!userData" class="flex justify-content-center align-items-center pt-5">
 			<Message severity="error" text="Пользователь не найден" />
 		</div>
 		<div v-else class="grid">
@@ -121,9 +111,7 @@ const moderateProfile = () => {}
 								<p class="m-0">{{ formatDate(userData.updated_at) }}</p>
 							</div>
 							<div>
-								<span class="font-semibold text-lg block mb-2"
-									>ID создателя:</span
-								>
+								<span class="font-semibold text-lg block mb-2">ID создателя:</span>
 								<p class="m-0">{{ userData.creator_id || 'Не указан' }}</p>
 							</div>
 						</div>
@@ -160,7 +148,7 @@ const moderateProfile = () => {}
 					</template>
 					<template #footer>
 						<div class="flex gap-4 mt-2">
-							<Button label="Отклонить" severity="secondary" outlined />
+							<Button label="Сохранить" severity="secondary" outlined />
 							<Button
 								@click="isModerationDialogShow = true"
 								label="Одобрить"
@@ -209,12 +197,7 @@ const moderateProfile = () => {}
 			</div>
 
 			<template #footer>
-				<Button
-					label="Отменить"
-					icon="pi pi-times"
-					text
-					@click="isModerationDialogShow = false"
-				/>
+				<Button label="Отменить" icon="pi pi-times" text @click="isModerationDialogShow = false" />
 				<Button label="Сохранить" icon="pi pi-check" @click="moderateProfile" />
 			</template>
 		</Dialog>

@@ -998,9 +998,9 @@ const sendModerationData = () => {
 
 			<template #footer>
 				<Button
-					label="Отклонить"
+					label="Сохранить"
 					icon="pi pi-times"
-					severity="danger"
+					severity="secondary"
 					@click="sendModerationData"
 				/>
 				<Button

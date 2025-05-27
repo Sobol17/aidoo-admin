@@ -149,7 +149,7 @@ const moderateProfile = () => {}
 					</template>
 					<template #footer>
 						<div class="flex gap-4 mt-2">
-							<Button label="Отклонить" severity="secondary" outlined />
+							<Button label="Сохранить" severity="secondary" outlined />
 							<Button
 								@click="isModerationDialogShow = true"
 								label="Одобрить"
