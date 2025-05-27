@@ -413,7 +413,7 @@ const sendModerationData = () => {
 			<template #footer>
 				<Button
 					label="Сохранить"
-					icon="pi pi-times"
+					icon="pi pi-bookmark"
 					severity="secondary"
 					@click="sendModerationData"
 				/>

@@ -157,7 +157,7 @@ const progressValue = computed(() => {
 					</template>
 					<template #footer>
 						<div class="flex gap-4 mt-2">
-							<Button label="Сохранить" severity="secondary" outlined />
+							<Button label="Сохранить" severity="secondary" icon="pi pi-bookmark" outlined />
 							<Button
 								@click="isModerationDialogShow = true"
 								label="Одобрить"
