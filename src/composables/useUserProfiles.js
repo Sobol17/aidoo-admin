@@ -1,12 +1,7 @@
 import { getUserProfiles, moderateUserProfile } from '@/api/user-profiles'
 import { useProfileStore } from '@/stores/profile'
 import { formatDate } from '@/utils/formatDate'
-import {
-	keepPreviousData,
-	useMutation,
-	useQuery,
-	useQueryClient,
-} from '@tanstack/vue-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed } from 'vue'
 
 function getProfileType(profileType) {
@@ -16,28 +11,18 @@ function getProfileType(profileType) {
 }
 
 function getProfileStatus(profileStatus) {
+	if (profileStatus === 'verified') return 'Активный'
 	if (profileStatus === 'actived') return 'Активный'
+	if (profileStatus === 'moderation') return 'На модерации'
 	if (profileStatus === 'rejected') return 'Заблокирован'
+	if (profileStatus === 'deleted') return 'Удален'
 	return 'Неизвестно'
 }
 
-export function useUserProfiles(
-	profileStatus,
-	profileType,
-	search,
-	page,
-	limit
-) {
+export function useUserProfiles(profileStatus, profileType, search, page, limit) {
 	const profileStore = useProfileStore()
 	return useQuery({
-		queryKey: computed(() => [
-			'user-profiles',
-			page,
-			limit,
-			profileStatus,
-			profileType,
-			search,
-		]),
+		queryKey: computed(() => ['user-profiles', page, limit, profileStatus, profileType, search]),
 		queryFn: () =>
 			getUserProfiles(
 				profileStatus.value.code,
@@ -56,6 +41,9 @@ export function useUserProfiles(
 				return {
 					count: data.count,
 					items: userProfiles.map(profile => ({
+						moderatorId: profile.moderator_id,
+						moderationComment: profile.moderation_comment,
+						moderationData: profile.moderation_data,
 						createdAt: formatDate(profile.created_at),
 						updatedAt: formatDate(profile.updated_at),
 						accountId: profile.account_id,
@@ -67,7 +55,13 @@ export function useUserProfiles(
 						city: profile.city ? profile.city.name : '-',
 						id: profile._id,
 						status: getProfileStatus(profile.status),
-						partner: profile.partner_info,
+						partnerShortName: profile.partner_info?.short_name,
+						partnerFullName: profile.partner_info?.full_name,
+						partnerPhone: profile.partner_info?.phone,
+						partnerEmail: profile.partner_info?.email,
+						partnerWhatsapp: profile.partner_info?.whatsapp,
+						partnerTelegram: profile.partner_info?.telegram,
+						partnerInn: profile.partner_info?.inn,
 						hasAgreement: profile.agreement ? 'Да' : 'Нет',
 					})),
 				}

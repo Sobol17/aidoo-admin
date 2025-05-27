@@ -221,7 +221,6 @@ const handleSearch = debounce(event => {
 				<Column field="status" header="Статус" sortable style="min-width: 8rem"></Column>
 				<Column field="lat" header="Широта" sortable style="min-width: 10rem"></Column>
 				<Column field="lon" header="Долгота" sortable style="min-width: 10rem"></Column>
-				<Column field="status" header="Статус" sortable style="min-width: 10rem"></Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<Button

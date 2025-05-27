@@ -28,7 +28,6 @@ import Subs from '@/views/pages/subs/Subs.vue'
 import Support from '@/views/pages/support/Support.vue'
 import TaxTable from '@/views/pages/taxes/TaxTable.vue'
 import AccountsUser from '@/views/pages/user-accounts/AccountsUser.vue'
-import UserProfile from '@/views/pages/user-profiles/UserProfile.vue'
 import UserProfiles from '@/views/pages/user-profiles/UserProfiles.vue'
 import ViolationsTable from '@/views/pages/violations/ViolationsTable.vue'
 import { watch } from 'vue'
@@ -91,12 +90,6 @@ const router = createRouter({
 					name: 'user-profiles',
 					meta: { roles: ['admin', 'moderator'] },
 					component: UserProfiles,
-				},
-				{
-					path: '/user-profiles/:id',
-					name: 'user-profile',
-					meta: { roles: ['admin', 'moderator'] },
-					component: UserProfile,
 				},
 				{
 					path: '/advertising',

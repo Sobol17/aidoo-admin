@@ -8,6 +8,8 @@ function transformStatus(status) {
 	switch (status) {
 		case 'actived':
 			return 'Активный'
+		case 'verified':
+			return 'Активный'
 		case 'rejected':
 			return 'Заблокирован'
 		default:
@@ -30,6 +32,9 @@ export function useOffers(status, search, page, limit) {
 				return {
 					count: data.count,
 					items: offers.map(offer => ({
+						moderatorId: offer.moderator_id,
+						moderationComment: offer.moderation_comment,
+						moderationData: offer.moderation_data,
 						id: offer._id,
 						images: offer.images,
 						video: offer.video,
@@ -37,7 +42,7 @@ export function useOffers(status, search, page, limit) {
 						subcategoryId: offer.subcategory_id,
 						price: offer.price,
 						description: offer.description,
-						location: offer.location,
+						location: offer.location?.address,
 						offerStatus: transformStatus(offer.status),
 						promotion: offer.promotion_info,
 						profile: offer.profile,

@@ -8,6 +8,9 @@ import Button from 'primevue/button'
 import { ref } from 'vue'
 
 const profileStore = useProfileStore()
+const props = defineProps({
+	messages: Array,
+})
 const emits = defineEmits(['sendMessage'])
 
 const newMessage = ref('')
@@ -101,10 +104,7 @@ function onUploadImages(e) {
 <template>
 	<div class="flex flex-col h-full max-h-[800px] overflow-y-auto">
 		<!-- Сообщения -->
-		<div
-			v-if="messages?.length > 0"
-			class="flex flex-col gap-4 p-4 overflow-y-auto grow"
-		>
+		<div v-if="messages?.length > 0" class="flex flex-col gap-4 p-4 overflow-y-auto grow">
 			<div
 				v-for="message in messages"
 				:key="message._id"
@@ -131,10 +131,7 @@ function onUploadImages(e) {
 				>
 					<p v-if="message.text" class="break-words">{{ message.text }}</p>
 
-					<div
-						v-if="message.attachments?.length"
-						class="flex flex-col mt-2 space-y-2"
-					>
+					<div v-if="message.attachments?.length" class="flex flex-col mt-2 space-y-2">
 						<FileComponent
 							v-for="(attachment, index) in message.attachments"
 							:key="index"
@@ -150,11 +147,7 @@ function onUploadImages(e) {
 				</div>
 			</div>
 			<!--Отправленное сообщение-->
-			<div
-				v-for="message in myTempMessages"
-				:key="message"
-				class="flex items-end justify-end"
-			>
+			<div v-for="message in myTempMessages" :key="message" class="flex items-end justify-end">
 				<div
 					class="max-w-xs px-4 py-2 rounded-lg shadow-sm bg-primary-500 text-white rounded-br-none"
 				>

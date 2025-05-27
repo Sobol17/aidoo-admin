@@ -40,10 +40,16 @@ const filters = ref({
 	global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
 
-const actionOptions = ref([
-	{ name: 'Добавление', code: 'add' },
-	{ name: 'Удаление', code: 'remove' },
-])
+const actionOptions = action => {
+	switch (action) {
+		case 'add':
+			return 'Оформление'
+		case 'extend':
+			return 'Продление'
+		case 'remove':
+			return 'Отмена'
+	}
+}
 
 const expandedRows = ref([])
 
@@ -106,65 +112,35 @@ const handleSearch = debounce(event => {
 
 				<Column expander style="width: 5rem" />
 
+				<Column field="userId" header="Пользователь" sortable style="min-width: 12rem"></Column>
 				<Column
-					field="userId"
-					header="Пользователь"
+					field="userPhone"
+					header="Телефон пользователя"
 					sortable
 					style="min-width: 12rem"
 				></Column>
-				<Column
-					field="startDate"
-					header="Дата начала"
-					sortable
-					style="min-width: 12rem"
-				>
-				</Column>
-				<Column
-					field="endDate"
-					header="Дата окончания"
-					sortable
-					style="min-width: 12rem"
-				>
-				</Column>
-				<Column
-					field="id"
-					header="ID подписки"
-					sortable
-					style="min-width: 12rem"
-				></Column>
+				<Column field="status" header="Статус" sortable style="min-width: 12rem"></Column>
+				<Column field="startDate" header="Дата начала" sortable style="min-width: 12rem"> </Column>
+				<Column field="endDate" header="Дата окончания" sortable style="min-width: 12rem"> </Column>
+				<Column field="id" header="ID подписки" sortable style="min-width: 12rem"></Column>
 				<template #expansion="slotProps">
 					<div class="p-4">
 						<h5>История</h5>
 						<DataTable :value="slotProps.data.history">
-							<Column
-								field="action"
-								header="Действие"
-								style="min-width: 8rem"
-								sortable
-							>
+							<Column field="action" header="Действие" style="min-width: 8rem" sortable>
+								<template #body="slotProps">
+									<span>{{ actionOptions(slotProps.data.action) }}</span>
+								</template>
 							</Column>
-							<Column
-								field="amount"
-								header="Количество"
-								style="min-width: 6rem"
-								sortable
-							>
-							</Column>
-							<Column
-								field="created_at"
-								header="Дата создания"
-								style="min-width: 6rem"
-								sortable
-							>
+							<Column field="amount" header="Стоимость" style="min-width: 6rem" sortable> </Column>
+							<Column field="created_at" header="Дата создания" style="min-width: 6rem" sortable>
 								<template #body="slotProps">
 									<span>{{ formatDate(slotProps.data.created_at) }}</span>
 								</template>
 							</Column>
 							<template #empty>
 								<div class="flex items-center justify-center">
-									<div class="text-gray-500 text-lg py-8">
-										Нет данных для отображения
-									</div>
+									<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
 								</div>
 							</template>
 						</DataTable>
@@ -172,9 +148,7 @@ const handleSearch = debounce(event => {
 				</template>
 				<template #empty>
 					<div class="flex items-center justify-center">
-						<div class="text-gray-500 text-lg py-8">
-							Нет данных для отображения
-						</div>
+						<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
 					</div>
 				</template>
 			</DataTable>

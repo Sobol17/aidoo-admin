@@ -3,10 +3,9 @@ import { useModerateOffer, useOffers } from '@/composables/useOffers'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
 import { FilterMatchMode } from '@primevue/core/api'
-import { Button } from 'primevue'
+import { Button, Textarea } from 'primevue'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 const profileStore = useProfileStore()
 
@@ -44,18 +43,9 @@ const filters = ref({
 })
 
 const statusOptions = ref([
-	{ name: 'Активный', code: 'actived' },
+	{ name: 'Активный', code: 'verified' },
 	{ name: 'Заблокирован', code: 'rejected' },
 ])
-
-const offerItem = ref({
-	firstName: '',
-	lastName: '',
-	phone: '',
-	city: '',
-	accountId: '',
-	profileType: '',
-})
 
 const { mutate: moderateOffer, isPending: isModeratingOffer } = useModerateOffer({
 	onSuccess: () => {
@@ -77,33 +67,7 @@ const { mutate: moderateOffer, isPending: isModeratingOffer } = useModerateOffer
 	},
 })
 
-function saveNewProfile() {
-	submitted.value = true
-	moderateOffer({
-		id: offerItem.value.id,
-		moderationData: {
-			profile_id: profileStore.profileID,
-			status: offerItem.value.status.code,
-			moderation_comment: offerItem.value.comment,
-		},
-	})
-}
-
 const submitted = ref(false)
-
-function openNew(event) {
-	offerItem.value = {
-		firstName: '',
-		lastName: '',
-		phone: '',
-		city: '',
-		accountId: event.data.accountId,
-		profileType: '',
-		id: event.data.id,
-	}
-	submitted.value = false
-	moderationDialog.value = true
-}
 
 function hideDialog() {
 	moderationDialog.value = false
@@ -125,10 +89,77 @@ const handleSearch = debounce(event => {
 	search.value = event.target.value
 }, 500)
 
-const router = useRouter()
+const selectedModerationOffer = ref({})
+const moderationFields = ref(null)
 
-function rowClick(event) {
-	router.push(`/offers/${event.data.id}`)
+const commentLength = computed(() => {
+	return selectedModerationOffer.value.moderationComment?.length
+})
+
+const isModerationSuccess = computed(() => {
+	return Object.values(moderationFields.value).every(field => field.correct === true)
+})
+
+const progressValue = computed(() => {
+	const fields = Object.values(moderationFields.value)
+	const total = fields.length
+	const correctCount = fields.filter(field => field.correct === true).length
+
+	return Math.round((correctCount / total) * 100)
+})
+
+const rowClick = event => {
+	selectedModerationOffer.value = {
+		...event.data,
+		status: statusOptions.value.find(status => status.name === event.data.offerStatus),
+	}
+
+	const baseFields = {
+		video: event.data.video,
+		title: event.data.title,
+		description: event.data.description,
+		images: event.data.images,
+		location: event.data.location,
+		price: event.data.price,
+	}
+
+	if (!event.data.moderationData) {
+		moderationFields.value = Object.fromEntries(
+			Object.entries(baseFields).map(([key, value]) => [key, { value, correct: false }])
+		)
+	} else {
+		moderationFields.value = Object.fromEntries(
+			Object.entries(baseFields).map(([key, value]) => {
+				const moderationEntry = event.data.moderationData.find(item => item.field === key)
+				return [key, { value, correct: moderationEntry.correct }]
+			})
+		)
+	}
+	moderationDialog.value = true
+}
+
+const transformModerationFields = moderationFields => {
+	return Object.entries(moderationFields).map(([field, data]) => ({
+		field,
+		correct: data.correct,
+		comment: data.comment || '',
+	}))
+}
+
+const sendModerationData = () => {
+	submitted.value = true
+
+	if (commentLength.value > 0) {
+		moderateOffer({
+			id: selectedModerationOffer.value.id,
+			moderationData: {
+				profile_id: profileStore.profileID,
+				status: selectedModerationOffer.value.status.code,
+				moderation_comment: selectedModerationOffer.value.moderationComment,
+				moderation_data: transformModerationFields(moderationFields.value),
+			},
+		})
+	}
 }
 </script>
 
@@ -177,8 +208,6 @@ function rowClick(event) {
 					</div>
 				</template>
 
-				<Column expander style="width: 5rem" />
-
 				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
 				<Column field="title" header="Название" sortable style="min-width: 12rem"></Column>
 				<Column field="description" header="Описание" sortable style="min-width: 12rem">
@@ -211,39 +240,10 @@ function rowClick(event) {
 							outlined
 							label="Модерирование"
 							severity="help"
-							@click="openNew(slotProps)"
+							@click="rowClick(slotProps)"
 						/>
 					</template>
 				</Column>
-				<template #expansion="slotProps">
-					<div v-if="slotProps.data.profile" class="p-4">
-						<div class="flex items-start gap-x-20">
-							<div>
-								<h5>Изображения</h5>
-								<Image
-									v-for="image in slotProps.data.images"
-									:src="'https://aidoo-test.ru/api-admin/files/' + image"
-									alt="Image"
-									width="250"
-								/>
-							</div>
-							<div>
-								<h5>Адрес</h5>
-								<p class="text-lg">{{ slotProps.data.location.address }}</p>
-							</div>
-						</div>
-						<h5>Информация о пользователе</h5>
-						<DataTable :value="[slotProps.data.profile]">
-							<Column field="_id" header="ID" style="min-width: 8rem" sortable></Column>
-							<Column field="first_name" header="Имя" style="min-width: 6rem" sortable></Column>
-							<Column field="last_name" header="Фамилия" style="min-width: 6rem" sortable></Column>
-							<Column field="city" header="Город" style="min-width: 6rem" sortable></Column>
-						</DataTable>
-					</div>
-					<div v-else>
-						<h5>Информация о пользователе отсутствует</h5>
-					</div>
-				</template>
 				<template #empty>
 					<div class="flex items-center justify-center">
 						<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
@@ -255,47 +255,174 @@ function rowClick(event) {
 		<!-- Диалог для модерирования оффера -->
 		<Dialog
 			v-model:visible="moderationDialog"
-			:style="{ width: '450px' }"
+			:style="{ width: '950px' }"
 			header="Модерирование предложения"
 			:modal="true"
 		>
 			<div class="flex flex-col gap-6">
 				<div>
-					<div class="block font-bold mb-3">Статус профиля</div>
+					<p>Индикатор корректности</p>
+					<ProgressBar :value="progressValue" :showValue="false"></ProgressBar>
+				</div>
+				<div class="flex flex-wrap justify-between gap-4">
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="firstName">Видео</label>
+						<div class="flex gap-x-8 items-center mt-2">
+							<video
+								v-if="moderationFields.video.value"
+								:src="'https://aidoo-test.ru/api-admin/files/' + moderationFields.video.value"
+								class="w-[420px]"
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.video.correct" />
+							</div>
+						</div>
+					</div>
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="firstName">Изображения</label>
+						<div v-if="moderationFields.images.value" class="flex gap-x-8 items-center mt-2">
+							<Image
+								v-for="image in moderationFields.images.value"
+								:key="image"
+								:src="'https://aidoo-test.ru/api-admin/files/' + image"
+								class="w-[240px]"
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.images.correct" />
+							</div>
+						</div>
+					</div>
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="firstName">Название</label>
+						<div class="flex gap-x-8 items-center">
+							<Textarea
+								disabled
+								id="firstName"
+								class="mt-2"
+								placeholder="Title"
+								v-model.trim="moderationFields.title.value"
+								required="true"
+								autofocus
+								:invalid="!moderationFields.title.correct"
+								fluid
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.title.correct" />
+							</div>
+						</div>
+					</div>
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="lastName">Описание</label>
+						<div class="flex gap-x-8 items-center">
+							<Textarea
+								disabled
+								id="lastName"
+								class="mt-2"
+								placeholder="Text1"
+								v-model.trim="moderationFields.description.value"
+								required="true"
+								autofocus
+								:invalid="!moderationFields.description.correct"
+								fluid
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.description.correct" />
+							</div>
+						</div>
+					</div>
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="phone">Локация</label>
+						<div class="flex gap-x-8 items-center">
+							<InputText
+								disabled
+								id="phone"
+								class="mt-2"
+								placeholder="Text1"
+								v-model.trim="moderationFields.location.value"
+								required="true"
+								autofocus
+								:invalid="!moderationFields.location.correct"
+								fluid
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.location.correct" />
+							</div>
+						</div>
+					</div>
+					<div class="basis-[calc(50%_-_8px)]">
+						<label class="font-bold" for="phone">Стоимость</label>
+						<div class="flex gap-x-8 items-center">
+							<InputText
+								disabled
+								id="phone"
+								class="mt-2"
+								placeholder="Text1"
+								v-model.trim="moderationFields.price.value"
+								required="true"
+								autofocus
+								:invalid="!moderationFields.price.correct"
+								fluid
+							/>
+							<div class="shrink-0 flex gap-x-2">
+								<p class="mb-1">Корректность</p>
+
+								<ToggleSwitch v-model="moderationFields.price.correct" />
+							</div>
+						</div>
+					</div>
+				</div>
+				<div>
+					<div class="block font-bold mb-3">Статус</div>
 					<Select
-						v-model="offerItem.status"
+						v-model="selectedModerationOffer.status"
 						:options="statusOptions"
 						optionLabel="name"
 						placeholder="Выберите статус"
 						class="w-full"
-						:invalid="submitted && !offerItem.status"
+						:invalid="submitted && !selectedModerationOffer.status"
 					/>
-					<small v-if="submitted && !offerItem.status" class="text-red-500"
+					<small v-if="submitted && !selectedModerationOffer.status" class="text-red-500"
 						>Обязательное поле</small
 					>
 				</div>
 				<div>
 					<div class="block font-bold mb-3">Комментарий модератора</div>
 					<Textarea
-						v-model="offerItem.comment"
-						placeholder="Комментарий"
+						v-model="selectedModerationOffer.moderationComment"
+						placeholder="Добавьте ваш комментарий"
 						class="w-full"
-						:invalid="submitted && !offerItem.comment"
+						:invalid="submitted && !selectedModerationOffer.moderationComment"
 					/>
-					<p class="text-right mb-0">{{ offerItem.comment?.length }} / 30</p>
-					<small v-if="submitted && offerItem.comment?.length < 30" class="text-red-500"
+					<p class="text-left">{{ commentLength }} / 30</p>
+					<small v-if="submitted && !selectedModerationOffer.comment" class="text-red-500"
 						>Обязательное поле. Минимум 30 символов</small
 					>
 				</div>
 			</div>
 
 			<template #footer>
-				<Button label="Отменить" icon="pi pi-times" text @click="hideDialog" />
 				<Button
-					label="Сохранить"
+					label="Отклонить"
+					icon="pi pi-times"
+					severity="danger"
+					@click="sendModerationData"
+				/>
+				<Button
+					label="Одобрить"
 					icon="pi pi-check"
-					@click="saveNewProfile"
+					@click="sendModerationData"
 					:loading="isModeratingOffer"
+					:disabled="!isModerationSuccess"
 				/>
 			</template>
 		</Dialog>

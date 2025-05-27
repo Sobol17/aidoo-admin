@@ -5,6 +5,7 @@ import {
 	useComplaintMessages,
 	useComplaints,
 	useSendMessage,
+	useUpdateComplaint,
 } from '@/composables/useComplaints'
 import { useUploadFile } from '@/composables/useFiles'
 import { useProfileStore } from '@/stores/profile'
@@ -21,14 +22,12 @@ const selectedComplaintStatus = ref({ name: 'Все', code: 'all' })
 const statusOptions = ref([
 	{ name: 'Все', code: 'all' },
 	{ name: 'Активные', code: 'actived' },
-	{ name: 'Закрытые', code: 'archived' },
+	{ name: 'Закрытые', code: 'closed' },
 	{ name: 'В работе', code: 'in_progress' },
 	{ name: 'Важные', code: 'important' },
 ])
 
-const { data: complaintsData, isLoading: isLoadingReviews } = useComplaints(
-	selectedComplaintStatus
-)
+const { data: complaintsData, isLoading: isLoadingReviews } = useComplaints(selectedComplaintStatus)
 
 const complaints = computed(() => {
 	return complaintsData?.value || []
@@ -72,7 +71,6 @@ const { mutate: sendMessage, isPending: isCreatingNewAdv } = useSendMessage({
 			detail: 'Сообщение отправлено',
 			life: 3000,
 		})
-		hideDialog()
 	},
 })
 
@@ -128,12 +126,11 @@ function handleAnswer(rowData) {
 
 function handleClose(rowData) {
 	closeComplaintDialog.value = true
-	complaintTemp.value = rowData
+	complaintTemp.value = { ...rowData }
 }
 
 function handleShare(rowData) {
-	const currentUrl =
-		window.location.origin + window.location.pathname + '?id=' + rowData.id
+	const currentUrl = window.location.origin + window.location.pathname + '?id=' + rowData.id
 	navigator.clipboard
 		.writeText(currentUrl)
 		.then(() => {
@@ -176,6 +173,37 @@ function onUpload(e) {
 		summary: 'Завершено',
 		detail: 'Загрузка файлов завершена',
 		life: 3000,
+	})
+}
+
+const { mutate: updateComplaint } = useUpdateComplaint({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Статус жалобы изменен',
+			life: 3000,
+		})
+		closeComplaintDialog.value = false
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: `Не удалось изменить статус жалобы ${error}`,
+			life: 3000,
+		})
+	},
+})
+
+const changeComplaintStatus = (remember = false) => {
+	updateComplaint({
+		id: complaintTemp.value.id,
+		complaint: {
+			profile_id: profileStore.profileID,
+			message: complaintTemp.value.comment,
+			status: !remember ? 'closed' : 'important',
+		},
 	})
 }
 
@@ -222,10 +250,7 @@ onMounted(() => {
 								<InputIcon>
 									<i class="pi pi-search" />
 								</InputIcon>
-								<InputText
-									v-model="filters['global'].value"
-									placeholder="Поиск"
-								/>
+								<InputText v-model="filters['global'].value" placeholder="Поиск" />
 							</IconField>
 						</div>
 					</div>
@@ -233,63 +258,43 @@ onMounted(() => {
 
 				<Column expander style="width: 5rem" />
 
-				<Column
-					field="id"
-					header="ID"
-					sortable
-					style="min-width: 8rem"
-				></Column>
+				<Column field="id" header="ID" sortable style="min-width: 8rem"></Column>
 				<Column
 					field="profileId"
 					header="ID пользователя"
 					sortable
 					style="min-width: 8rem"
 				></Column>
-				<Column
-					field="text"
-					header="Сообщение"
-					sortable
-					style="min-width: 8rem"
-				>
+				<Column field="status" header="Статус" sortable style="min-width: 8rem"></Column>
+				<Column field="text" header="Сообщение" sortable style="min-width: 8rem">
 					<template #body="slotProps">
 						<span>{{ slotProps.data.text }}</span>
 					</template>
 				</Column>
-				<Column
-					field="objectType"
-					header="Сущность"
-					sortable
-					style="min-width: 8rem"
-				>
-				</Column>
-				<Column
-					field="objectId"
-					header="ID сущности"
-					sortable
-					style="min-width: 8rem"
-				>
-				</Column>
-				<Column
-					field="createdAt"
-					header="Дата создания"
-					sortable
-					style="min-width: 12rem"
-				>
+				<Column field="objectType" header="Сущность" sortable style="min-width: 8rem"> </Column>
+				<Column field="objectId" header="ID сущности" sortable style="min-width: 8rem"> </Column>
+				<Column field="createdAt" header="Дата создания" sortable style="min-width: 12rem">
 				</Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<div class="flex gap-x-2">
-							<div>
-								<Menu
-									ref="menu"
-									:model="getMenuItems(slotProps.data)"
-									:popup="true"
+							<div class="flex items-center gap-x-4">
+								<Button
+									type="button"
+									label="Ответить"
+									@click="handleAnswer(slotProps.data)"
+									style="width: auto"
 								/>
 								<Button
 									type="button"
-									label="Действия"
-									icon="pi pi-angle-down"
-									@click="toggleMenu"
+									label="Закрыть"
+									@click="handleClose(slotProps.data)"
+									style="width: auto"
+								/>
+								<Button
+									type="button"
+									label="Поделиться"
+									@click="handleShare(slotProps.data)"
 									style="width: auto"
 								/>
 							</div>
@@ -306,6 +311,7 @@ onMounted(() => {
 									<div class="flex flex-wrap gap-4 min-w-[150px]">
 										<Image
 											v-for="image in slotProps.data.attachments"
+											:key="image"
 											:src="'https://aidoo-test.ru/api-admin/files/' + image"
 											alt="Image"
 											width="50"
@@ -315,19 +321,11 @@ onMounted(() => {
 							</div>
 							<h5>Информация о пользователе</h5>
 							<DataTable :value="[slotProps.data.profile]">
-								<Column
-									field="avatar_id"
-									header="Аватар"
-									style="min-width: 8rem"
-									sortable
-								>
+								<Column field="avatar_id" header="Аватар" style="min-width: 8rem" sortable>
 									<template #body="slotProps">
 										<Avatar
 											v-if="slotProps.data.avatar_id"
-											:image="
-												'https://aidoo-test.ru/api-admin/files/' +
-												slotProps.data.avatar_id
-											"
+											:image="'https://aidoo-test.ru/api-admin/files/' + slotProps.data.avatar_id"
 											shape="circle"
 										/>
 										<div
@@ -338,18 +336,8 @@ onMounted(() => {
 										</div>
 									</template>
 								</Column>
-								<Column
-									field="_id"
-									header="ID"
-									style="min-width: 8rem"
-									sortable
-								></Column>
-								<Column
-									field="first_name"
-									header="Имя"
-									style="min-width: 6rem"
-									sortable
-								></Column>
+								<Column field="_id" header="ID" style="min-width: 8rem" sortable></Column>
+								<Column field="first_name" header="Имя" style="min-width: 6rem" sortable></Column>
 								<Column
 									field="last_name"
 									header="Фамилия"
@@ -371,9 +359,7 @@ onMounted(() => {
 				</template>
 				<template #empty>
 					<div class="flex items-center justify-center">
-						<div class="text-gray-500 text-lg py-8">
-							Нет данных для отображения
-						</div>
+						<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
 					</div>
 				</template>
 			</DataTable>
@@ -424,6 +410,7 @@ onMounted(() => {
 					<div v-if="files" class="flex flex-wrap gap-2 mt-2">
 						<FileComponent
 							v-for="(attachment, index) in files"
+							:key="index"
 							:file="attachment"
 							mini
 							download
@@ -446,15 +433,12 @@ onMounted(() => {
 			</div>
 
 			<template #footer>
+				<Button label="Запомнить" @click="changeComplaintStatus(true)" :loading="isFileUploading" />
 				<Button
 					label="Отправить"
-					@click="closeComplaintDialog = false"
+					@click="changeComplaintStatus"
 					:loading="isFileUploading"
-				/>
-				<Button
-					label="Запомнить"
-					@click="saveNewProfile"
-					:loading="isFileUploading"
+					:disabled="complaintTemp.status !== 'В работе'"
 				/>
 			</template>
 		</Dialog>

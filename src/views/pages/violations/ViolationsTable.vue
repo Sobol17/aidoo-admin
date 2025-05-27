@@ -1,7 +1,12 @@
 <script setup>
-import { useDeleteFaq, useUpdateFaq } from '@/composables/useFaq'
+import { useUploadFile } from '@/composables/useFiles'
 import { useAccounts } from '@/composables/useUserAccounts'
-import { useCreateViolation, useViolations } from '@/composables/useViolations'
+import {
+	useCreateViolation,
+	useDeleteViolation,
+	useUpdateViolation,
+	useViolations,
+} from '@/composables/useViolations'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
 import { FilterMatchMode } from '@primevue/core/api'
@@ -76,6 +81,33 @@ const violationList = computed(() => {
 	return violationData?.value || []
 })
 
+// upload images
+const imageUrls = ref([])
+const { mutate: uploadImage, isPending: isImageUploading } = useUploadFile({
+	onSuccess: data => {
+		imageUrls.value.push(data._id)
+	},
+})
+
+function onUploadImages(e) {
+	for (const item of e.files) {
+		const formData = new FormData()
+		formData.append('document', item)
+		try {
+			uploadImage(formData)
+		} catch {
+			console.error('Ошибка загрузки файла:', item.name)
+		}
+	}
+
+	toast.add({
+		severity: 'info',
+		summary: 'Завершено',
+		detail: 'Загрузка файлов завершена',
+		life: 3000,
+	})
+}
+
 const { data: userAccountsData, isLoading: isLoadingUserAccounts } = useAccounts(
 	userListSearch,
 	userListPage,
@@ -126,7 +158,7 @@ const { mutate: createViolation, isPending: creatingCity } = useCreateViolation(
 		toast.add({
 			severity: 'success',
 			summary: 'Успех',
-			detail: 'Город успешно добавлен',
+			detail: 'Нарушение оформлено',
 			life: 3000,
 		})
 		hideDialog()
@@ -135,18 +167,18 @@ const { mutate: createViolation, isPending: creatingCity } = useCreateViolation(
 		toast.add({
 			severity: 'error',
 			summary: 'Ошибка',
-			detail: 'Город уже существует',
+			detail: 'Ошибка при оформлении нарушения',
 			life: 3000,
 		})
 	},
 })
 
-const { mutate: updateFaq, isPending: updatingCity } = useUpdateFaq({
+const { mutate: updateViolation, isPending: updatingCity } = useUpdateViolation({
 	onSuccess: () => {
 		toast.add({
 			severity: 'success',
 			summary: 'Успех',
-			detail: 'Информация о городе обновлена',
+			detail: 'Информация о нарушении обновлена',
 			life: 3000,
 		})
 		hideDialog()
@@ -155,21 +187,25 @@ const { mutate: updateFaq, isPending: updatingCity } = useUpdateFaq({
 		toast.add({
 			severity: 'error',
 			summary: 'Ошибка',
-			detail: 'Произошла ошибка',
+			detail: 'Ошибка при обновлении',
 			life: 3000,
 		})
 	},
 })
 
-function saveNewCity() {
+function saveNewViolation() {
 	submitted.value = true
 	if (isEdit.value) {
-		updateFaq({
+		updateViolation({
 			id: newViolation.value.id,
-			faq: {
-				question: newViolation.value.question,
-				answer: newViolation.value.answer,
+			violation: {
+				account_id: newViolation.value.accountId,
 				profile_id: profileStore.profileID,
+				reason: selectedReason.value.code,
+				description: newViolation.value.description,
+				images: imageUrls.value,
+				type_punishment: selectedPunishment.value.code,
+				date_to: getViolationTime(selectedPunishmentTime.value.code),
 			},
 		})
 	} else {
@@ -178,9 +214,9 @@ function saveNewCity() {
 			profile_id: profileStore.profileID,
 			reason: selectedReason.value.code,
 			description: newViolation.value.description,
-			images: '',
-			type_punishment: selectedPunishment,
-			date_to: getViolationTime(selectedPunishmentTime),
+			images: imageUrls.value,
+			type_punishment: selectedPunishment.value.code,
+			date_to: getViolationTime(selectedPunishmentTime.value.code),
 		})
 	}
 }
@@ -200,20 +236,24 @@ function hideDialog() {
 	submitted.value = false
 }
 
-function editCity(item) {
+function editViolation(data) {
 	isEdit.value = true
 	newViolation.value = {
-		...item,
+		...data,
 	}
+	selectedReason.value = violationReasons.find(item => item.name === data.reason)
+	console.log(data.typePunishment)
+	selectedPunishment.value = violationPunishments.find(item => item.name === data.typePunishment)
+	selectedPunishmentTime.value = punishmentDurationList.find(item => item.code == data.hours)
 	cityDialog.value = true
 }
 
-const { mutate: deleteFaq, isPending: isDeletingCity } = useDeleteFaq({
+const { mutate: deleteViolation, isPending: isDeletingCity } = useDeleteViolation({
 	onSuccess: () => {
 		toast.add({
 			severity: 'success',
 			summary: 'Успех',
-			detail: 'Город успешно удален',
+			detail: 'Нарушение успешно удалено',
 			life: 3000,
 		})
 		hideDialog()
@@ -229,7 +269,7 @@ const { mutate: deleteFaq, isPending: isDeletingCity } = useDeleteFaq({
 })
 
 function handleDeleteDialog() {
-	deleteFaq(newViolation.value.id)
+	deleteViolation(newViolation.value.id)
 	hideDialog()
 }
 
@@ -324,7 +364,7 @@ const handleSearch = debounce(event => {
 							outlined
 							rounded
 							class="mr-2"
-							@click="editCity(slotProps.data)"
+							@click="editViolation(slotProps.data)"
 						/>
 						<Button
 							icon="pi pi-trash"
@@ -382,24 +422,50 @@ const handleSearch = debounce(event => {
 		>
 			<div class="flex flex-col gap-6">
 				<div v-if="isEdit">
-					<label for="name" class="block font-bold mb-3">ID</label>
+					<label for="name" class="block font-bold mb-3">ID аккаунта</label>
 					<InputText
 						id="name"
-						v-model.trim="newViolation.id"
+						v-model.trim="newViolation.accountId"
 						required="true"
 						autofocus
-						:invalid="submitted && !newViolation.id"
+						:invalid="submitted && !newViolation.accountId"
 						fluid
 						disabled
 					/>
 				</div>
 				<div>
-					<label for="name" class="block font-bold mb-3">ID профиля</label>
+					<div class="block font-bold mb-3">Изображения</div>
+					<FileUpload
+						mode="basic"
+						@select="onUploadImages"
+						customUpload
+						auto
+						severity="secondary"
+						class="p-button-outlined"
+						chooseLabel="Выбрать"
+						multiple
+					/>
+					<div class="flex flex-wrap gap-4">
+						<Image
+							v-for="src in imageUrls"
+							:key="src"
+							:src="'https://aidoo-test.ru/api-admin/files/' + src"
+							alt="Image"
+							class="shadow-md rounded-xl w-full size-40 sm:w-64 mt-4 overflow-hidden"
+						/>
+					</div>
+					<small v-if="submitted && imageUrls?.length === 0" class="text-red-500"
+						>Обязательное поле</small
+					>
+				</div>
+				<div v-if="!isEdit">
+					<label for="name" class="block font-bold mb-3">ID аккаунта</label>
 					<Select
 						v-model="selectedAccountId"
 						:options="userAccounts"
 						optionLabel="name"
-						placeholder="Выберите профиль"
+						placeholder="Выберите номер телефона профиля"
+						filter
 						class="w-full"
 						:virtualScrollerOptions="userAccountsScrollOptions"
 					/>
@@ -470,7 +536,7 @@ const handleSearch = debounce(event => {
 				<Button
 					label="Сохранить"
 					icon="pi pi-check"
-					@click="saveNewCity"
+					@click="saveNewViolation"
 					:loading="updatingCity || creatingCity"
 				/>
 			</template>
@@ -484,7 +550,7 @@ const handleSearch = debounce(event => {
 		>
 			<div class="flex items-center gap-4">
 				<i class="pi pi-exclamation-triangle !text-3xl" />
-				Вы уверены, что хотите удалить Вопрос {{ newViolation.question }}?
+				Вы уверены, что хотите удалить нарушение {{ newViolation.id }}?
 			</div>
 			<template #footer>
 				<Button label="Нет" icon="pi pi-times" text @click="deleteCityDialog = false" />

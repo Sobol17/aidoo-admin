@@ -12,7 +12,7 @@ const selectedOrderStatus = ref({ name: 'Все', code: 'all' })
 
 const statusOptions = ref([
 	{ name: 'Все', code: 'all' },
-	{ name: 'Выполняется', code: 'PENDING' },
+	{ name: 'Отправлен', code: 'PENDING' },
 	{ name: 'Выполнен', code: 'COMPLETED' },
 	{ name: 'Ошибочный', code: 'FAILED' },
 	{ name: 'Отклонен', code: 'CANCELED' },
@@ -22,12 +22,16 @@ const search = ref('')
 const page = ref(1)
 const first = ref(0)
 const limit = ref(7)
+const startDate = ref('2025-05-01')
+const endDate = ref('2025-05-31')
 
 const { data: ordersData, isLoading: isLoadingReviews } = useOrders(
 	selectedOrderStatus,
 	search,
 	page,
-	limit
+	limit,
+	startDate,
+	endDate
 )
 
 const orders = computed(() => {
@@ -68,8 +72,30 @@ const confirm = useConfirm()
 const toast = useToast()
 
 const { mutate: createReport, isLoading: isLoadingReport } = useOrdersReport({
-	onSuccess: () => {
+	onSuccess: (data, variables, context) => {
+		const blob = new Blob([data], { type: 'application/octet-stream' })
+
+		const contentDisposition = context?.response?.headers.get('content-disposition')
+		let filename = 'report.xlsx'
+
+		if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
+			const matches = /filename="?([^"]+)"?/.exec(contentDisposition)
+			if (matches.length > 1) {
+				filename = matches[1]
+			}
+		}
+
+		const downloadUrl = window.URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = downloadUrl
+		a.download = filename
+		document.body.appendChild(a)
+		a.click()
+		a.remove()
+		window.URL.revokeObjectURL(downloadUrl)
+
 		reportDates.value = null
+
 		toast.add({
 			severity: 'info',
 			summary: 'Confirmed',
@@ -125,7 +151,7 @@ const reportDates = ref(null)
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
-						<h4 class="m-0">Всего: {{ orders.countOrders ?? 0 }}</h4>
+						<h4 class="m-0">Всего: {{ orders.count ?? 0 }}</h4>
 						<div class="flex items-center gap-x-2">
 							<Select
 								v-model="selectedOrderStatus"
@@ -148,6 +174,7 @@ const reportDates = ref(null)
 											v-model="reportDates"
 											selectionMode="range"
 											:manualInput="false"
+											dateFormat="yy-mm-dd"
 											class="w-full mt-2"
 										/>
 										<div class="flex items-center gap-2 mt-4">
@@ -171,12 +198,43 @@ const reportDates = ref(null)
 						</div>
 					</div>
 				</template>
-
-				<Column expander style="width: 5rem" />
-
-				<Column field="reviewStatus" header="Статус" sortable style="min-width: 12rem"></Column>
-				<Column field="price" header="Сумма" sortable style="min-width: 8rem"></Column>
-				<Column field="createdAt" header="Дата создания" sortable style="min-width: 12rem"></Column>
+				<Column field="id" header="ID платежа" sortable style="min-width: 12rem"></Column>
+				<Column field="userId" header="ID пользователя" sortable style="min-width: 8rem"></Column>
+				<Column
+					field="userPhone"
+					header="Телефон пользователя"
+					sortable
+					style="min-width: 12rem"
+				></Column>
+				<Column field="status" header="Статус платежа" sortable style="min-width: 12rem"></Column>
+				<Column field="createdAt" header="Дата платежа" sortable style="min-width: 12rem"></Column>
+				<Column
+					field="countMonths"
+					header="Кол-во месяцев"
+					sortable
+					style="min-width: 12rem"
+				></Column>
+				<Column
+					field="countLiftSearch"
+					header="Кол-во поднятий"
+					sortable
+					style="min-width: 12rem"
+				></Column>
+				<Column
+					field="countLiftHighLight"
+					header="Кол-во выделений"
+					sortable
+					style="min-width: 12rem"
+				></Column>
+				<Column field="amount" header="Сумма платежа" sortable style="min-width: 12rem"></Column>
+				<Column field="type" header="Тип" sortable style="min-width: 12rem"></Column>
+				<Column field="currency" header="Валюта" sortable style="min-width: 12rem"></Column>
+				<Column
+					field="finishedAt"
+					header="Дата окончания"
+					sortable
+					style="min-width: 12rem"
+				></Column>
 				<Column
 					field="updatedAt"
 					header="Дата обновления"

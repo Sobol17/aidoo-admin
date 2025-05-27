@@ -16,12 +16,25 @@ const getReasonText = reason => {
 
 const getTypePunishmentText = type => {
 	const reasonMap = new Map([
-		['limitation', 'Ограниченный доступ'],
+		['limitation', 'Ограничение доступа'],
 		['text_warning', 'Текстовое предупреждение'],
 		['deletion', 'Удаление причины нарушения'],
 	])
 
 	return reasonMap.get(type)
+}
+
+function getHoursDifference(dateStr1, dateStr2) {
+	const date1 = new Date(dateStr1)
+	const date2 = new Date(dateStr2)
+
+	// Разница в миллисекундах
+	const diffInMs = Math.abs(date2 - date1)
+
+	// Переводим миллисекунды в часы
+	const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+
+	return diffInHours
 }
 
 export function useViolations(search, page, limit) {
@@ -39,13 +52,15 @@ export function useViolations(search, page, limit) {
 					count: data.count,
 					items: violations.map(violation => ({
 						accountId: violation.account_id,
+						id: violation._id,
 						profileId: violation.profile_id,
 						reason: getReasonText(violation.reason),
 						description: violation.description,
 						images: violation.images,
 						typePunishment: getTypePunishmentText(violation.type_punishment),
-						dateTo: formatDate(violation.date_to),
+						hours: getHoursDifference(violation.created_at, violation.date_to),
 						createdAt: formatDate(violation.created_at),
+						dateTo: formatDate(violation.date_to),
 					})),
 				}
 			}

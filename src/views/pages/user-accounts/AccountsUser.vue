@@ -215,19 +215,6 @@ const handleSearch = debounce(event => {
 				<Column field="id" header="ID" sortable style="min-width: 16rem"></Column>
 				<Column field="phone" header="Телефон" sortable style="min-width: 16rem"></Column>
 				<Column field="blocked" header="Блокировка" style="min-width: 16rem"></Column>
-				<Column field="violation" header="Нарушение" sortable style="min-width: 12rem"></Column>
-				<Column
-					field="punishment_type"
-					header="Тип наказания"
-					sortable
-					style="min-width: 12rem"
-				></Column>
-				<Column
-					field="punishment_duration"
-					header="Срок наказания"
-					sortable
-					style="min-width: 12rem"
-				></Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<div class="flex items-center gap-x-2">
