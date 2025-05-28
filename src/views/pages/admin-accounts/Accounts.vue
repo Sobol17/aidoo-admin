@@ -20,11 +20,7 @@ const page = ref(1)
 const first = ref(0)
 const limit = ref(7)
 
-const {
-	data: accountsData,
-	isLoading,
-	error,
-} = useAccounts(search, page, limit)
+const { data: accountsData, isLoading, error } = useAccounts(search, page, limit)
 
 const accounts = computed(() => {
 	return accountsData?.value || []
@@ -52,47 +48,45 @@ const numericPhone = computed(() => {
 	return parseInt(newAccount.value.phone.replace(/\D/g, ''))
 })
 
-const { mutate: createAccount, isPending: isCreatingNewAccount } =
-	useCreateAccount({
-		onSuccess: () => {
-			toast.add({
-				severity: 'success',
-				summary: 'Успех',
-				detail: 'Аккаунт успешно создан',
-				life: 3000,
-			})
-			hideDialog()
-		},
-		onError: error => {
-			toast.add({
-				severity: 'error',
-				summary: 'Ошибка',
-				detail: 'Не удалось создать аккаунт',
-				life: 3000,
-			})
-		},
-	})
+const { mutate: createAccount, isPending: isCreatingNewAccount } = useCreateAccount({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Аккаунт успешно создан',
+			life: 3000,
+		})
+		hideDialog()
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Не удалось создать аккаунт',
+			life: 3000,
+		})
+	},
+})
 
-const { mutate: updateAccount, isPending: isUpdatingAccount } =
-	useUpdateAccount({
-		onSuccess: () => {
-			toast.add({
-				severity: 'success',
-				summary: 'Успех',
-				detail: 'Аккаунт успешно обновлен',
-				life: 3000,
-			})
-			hideDialog()
-		},
-		onError: error => {
-			toast.add({
-				severity: 'error',
-				summary: 'Ошибка',
-				detail: 'Не удалось обновить аккаунт',
-				life: 3000,
-			})
-		},
-	})
+const { mutate: updateAccount, isPending: isUpdatingAccount } = useUpdateAccount({
+	onSuccess: () => {
+		toast.add({
+			severity: 'success',
+			summary: 'Успех',
+			detail: 'Аккаунт успешно обновлен',
+			life: 3000,
+		})
+		hideDialog()
+	},
+	onError: error => {
+		toast.add({
+			severity: 'error',
+			summary: 'Ошибка',
+			detail: 'Не удалось обновить аккаунт',
+			life: 3000,
+		})
+	},
+})
 
 function saveNewAccount() {
 	if (isEdit.value) {
@@ -257,32 +251,17 @@ const handleSearch = debounce(event => {
 					sortable
 					style="min-width: 12rem"
 				></Column>
-				<Column
-					field="phone"
-					header="Телефон"
-					sortable
-					style="min-width: 16rem"
-				></Column>
+				<Column field="phone" header="Телефон" sortable style="min-width: 16rem"></Column>
 				<Column field="roles" header="Роли" style="min-width: 16rem">
 					<template #body="slotProps">
-						<div v-if="slotProps.data.roles?.length > 0">
-							<span v-for="role in slotProps.data.roles">{{ role }}</span>
+						<div v-if="slotProps.data.roles?.length > 0" class="flex items-center gap-x-1">
+							<span v-for="role in slotProps.data.roles" :key="role">{{ role }}</span>
 						</div>
 						<span v-else>-</span>
 					</template>
 				</Column>
-				<Column
-					field="id"
-					header="ID"
-					sortable
-					style="min-width: 16rem"
-				></Column>
-				<Column
-					field="createdAt"
-					header="Дата создания"
-					sortable
-					style="min-width: 12rem"
-				></Column>
+				<Column field="id" header="ID" sortable style="min-width: 16rem"></Column>
+				<Column field="createdAt" header="Дата создания" sortable style="min-width: 12rem"></Column>
 				<Column
 					field="updatedAt"
 					header="Дата обновления"
@@ -329,9 +308,7 @@ const handleSearch = debounce(event => {
 						fluid
 						disabled
 					/>
-					<small v-if="submitted && !newAccount.id" class="text-red-500"
-						>Обязательное поле</small
-					>
+					<small v-if="submitted && !newAccount.id" class="text-red-500">Обязательное поле</small>
 				</div>
 				<div>
 					<label for="name" class="block font-bold mb-3">Телефон</label>
@@ -389,18 +366,8 @@ const handleSearch = debounce(event => {
 				Вы уверены, что хотите удалить аккаунт c id {{ accountIdToDelete }}?
 			</div>
 			<template #footer>
-				<Button
-					label="Нет"
-					icon="pi pi-times"
-					text
-					@click="deleteProductDialog = false"
-				/>
-				<Button
-					label="Да"
-					icon="pi pi-check"
-					@click="deleteAccount"
-					:loading="isDeletingAccount"
-				/>
+				<Button label="Нет" icon="pi pi-times" text @click="deleteProductDialog = false" />
+				<Button label="Да" icon="pi pi-check" @click="deleteAccount" :loading="isDeletingAccount" />
 			</template>
 		</Dialog>
 	</div>

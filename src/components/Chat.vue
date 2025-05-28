@@ -53,6 +53,7 @@ function sendMessage() {
 		text: trimmed,
 		timestamp: new Date().toISOString(),
 		sender: { _id: profileStore.profileID, avatar_id: 'my-avatar.png' },
+		attachments: files.value.map(file => file._id),
 	})
 
 	emits('sendMessage', {
@@ -61,6 +62,7 @@ function sendMessage() {
 	})
 
 	newMessage.value = ''
+	files.value = []
 	scrollToBottom()
 }
 
