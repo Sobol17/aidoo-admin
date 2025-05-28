@@ -245,12 +245,6 @@ const handleSearch = debounce(event => {
 					</div>
 				</template>
 
-				<Column
-					field="creatorID"
-					header="Создатель (ID)"
-					sortable
-					style="min-width: 12rem"
-				></Column>
 				<Column field="phone" header="Телефон" sortable style="min-width: 16rem"></Column>
 				<Column field="roles" header="Роли" style="min-width: 16rem">
 					<template #body="slotProps">
@@ -260,7 +254,6 @@ const handleSearch = debounce(event => {
 						<span v-else>-</span>
 					</template>
 				</Column>
-				<Column field="id" header="ID" sortable style="min-width: 16rem"></Column>
 				<Column field="createdAt" header="Дата создания" sortable style="min-width: 12rem"></Column>
 				<Column
 					field="updatedAt"
@@ -268,6 +261,8 @@ const handleSearch = debounce(event => {
 					sortable
 					style="min-width: 12rem"
 				></Column>
+				<Column field="id" header="ID сотрудника" sortable style="min-width: 16rem"></Column>
+				<Column field="creatorID" header="ID создателя" sortable style="min-width: 12rem"></Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<Button
