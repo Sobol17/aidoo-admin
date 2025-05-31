@@ -9,6 +9,7 @@ import {
 } from '@/composables/useViolations'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
+import { useFormatTimestamp } from '@/utils/formatTimeStamp'
 import { FilterMatchMode } from '@primevue/core/api'
 import { InputText } from 'primevue'
 import { useToast } from 'primevue/usetoast'
@@ -330,6 +331,7 @@ const handleSearch = debounce(event => {
 				:loading="isLoadingCities"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -355,8 +357,24 @@ const handleSearch = debounce(event => {
 					sortable
 					style="min-width: 10rem"
 				></Column>
-				<Column field="createdAt" header="Дата начала" sortable style="min-width: 10rem"></Column>
-				<Column field="dateTo" header="Дата окончания" sortable style="min-width: 10rem"></Column>
+				<Column
+					field="hours"
+					header="Длительность наказания (в часах)"
+					sortable
+					style="min-width: 16rem"
+				></Column>
+				<Column field="createdAt" header="Дата начала" sortable style="min-width: 10rem">
+					<template #body="slotProps">
+						<p class="mb-1">{{ useFormatTimestamp(slotProps.data.createdAt)?.date }}</p>
+						<p>{{ useFormatTimestamp(slotProps.data.createdAt)?.time }}</p>
+					</template>
+				</Column>
+				<Column field="dateTo" header="Дата окончания" sortable style="min-width: 10rem">
+					<template #body="slotProps">
+						<p class="mb-1">{{ useFormatTimestamp(slotProps.data.dateTo)?.date }}</p>
+						<p>{{ useFormatTimestamp(slotProps.data.dateTo)?.time }}</p>
+					</template>
+				</Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<Button
@@ -504,9 +522,6 @@ const handleSearch = debounce(event => {
 						placeholder="Укажите длительность наказания"
 						class="w-full"
 					/>
-					<small v-if="submitted && !selectedPunishmentTime" class="text-red-500"
-						>Обязательное поле</small
-					>
 				</div>
 				<div>
 					<label for="name" class="block font-bold mb-3">Описание</label>

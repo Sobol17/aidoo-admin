@@ -20,6 +20,8 @@ export function useFaq(search, page, limit) {
 					items: faqList.map(faqItem => ({
 						id: faqItem._id,
 						question: faqItem.question,
+						creatorId: faqItem.creator_id,
+						creatorName: faqItem.creator_name,
 						answer: faqItem.answer,
 						createdAt: formatDate(faqItem.created_at),
 						updatedAt: formatDate(faqItem.updated_at),

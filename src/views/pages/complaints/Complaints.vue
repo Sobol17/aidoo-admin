@@ -234,6 +234,7 @@ onMounted(() => {
 				:rowsPerPageOptions="[7, 10, 25]"
 				currentPageReportTemplate="{first} до {last} из {totalRecords} элементов"
 				:loading="isLoadingReviews"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -320,7 +321,7 @@ onMounted(() => {
 								</div>
 							</div>
 							<h5>Информация о пользователе</h5>
-							<DataTable :value="[slotProps.data.profile]">
+							<DataTable :value="[slotProps.data.profile]" removableSort>
 								<Column field="avatar_id" header="Аватар" style="min-width: 8rem" sortable>
 									<template #body="slotProps">
 										<Avatar

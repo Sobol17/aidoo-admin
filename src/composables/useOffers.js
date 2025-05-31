@@ -40,6 +40,7 @@ export function useOffers(status, search, page, limit) {
 						video: offer.video,
 						title: offer.title,
 						subcategoryId: offer.subcategory_id,
+						subcategoryName: offer.subcategory_name,
 						price: offer.price,
 						description: offer.description,
 						location: offer.location?.address,

@@ -148,6 +148,7 @@ const reportDates = ref(null)
 				:loading="isLoadingReviews"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">

@@ -20,7 +20,7 @@ const status = ref('all')
 const search = ref('')
 const page = ref(1)
 const first = ref(0)
-const limit = ref(7)
+const limit = ref(1000)
 
 const { data: reviewsData, isLoading: isLoadingReviews } = useReviews(status, search, page, limit)
 
@@ -174,19 +174,14 @@ const sendModerationData = () => {
 				stripedRows
 				dataKey="id"
 				:paginator="true"
-				:rows="limit"
+				:rows="7"
 				:total-records="reviews.count"
-				:lazy="true"
 				:filters="filters"
 				paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
 				:rowsPerPageOptions="[7, 10, 25]"
 				:currentPageReportTemplate="`{first} до {last} из ${reviews.count} элементов`"
-				:rowHover="true"
-				@rowClick="rowClick"
-				selectionMode="single"
 				:loading="isLoadingReviews"
-				@page="handleChangePage"
-				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -211,18 +206,22 @@ const sendModerationData = () => {
 
 				<Column expander style="width: 5rem" />
 
-				<Column field="grade" header="Оценка">
+				<Column field="grade" sortable="" header="Оценка">
 					<template #body="slotProps">
 						<Rating :modelValue="slotProps.data.grade" readonly />
 					</template>
 				</Column>
-				<Column field="text" header="Текст" sortable style="min-width: 12rem"></Column>
+				<Column field="text" header="Текст" sortable style="min-width: 12rem">
+					<template #body="slotProps">
+						<span class="text-ellipsis line-clamp-1">{{ slotProps.data.text }}</span>
+					</template>
+				</Column>
 				<Column field="reviewStatus" header="Статус" sortable style="min-width: 12rem"></Column>
 				<Column field="author" header="Автор" sortable style="min-width: 8rem">
 					<template #body="slotProps">
-						<span v-if="slotProps.data.profile"
-							>{{ slotProps.data.profile.first_name }} {{ slotProps.data.profile.last_name }}</span
-						>
+						<span v-if="slotProps.data.profile">
+							{{ slotProps.data.profile.first_name }} {{ slotProps.data.profile.last_name }}
+						</span>
 						<span v-else>Отсутсвует</span>
 					</template>
 				</Column>
@@ -250,10 +249,9 @@ const sendModerationData = () => {
 						<div class="flex gap-x-20 items-start">
 							<div v-if="slotProps.data.profile">
 								<div class="text-lg">Автор:</div>
-								<span class="mb-2">Имя: {{ slotProps.data.profile.first_name }}</span>
-								<span class="mb-2"
-									>Фамилия: {{ slotProps.data.profile.last_name ?? 'Отсутвует' }}</span
-								>
+								<p class="mb-2">Имя: {{ slotProps.data.profile.first_name }}</p>
+								<p class="mb-2">Фамилия: {{ slotProps.data.profile.last_name ?? 'Отсутвует' }}</p>
+								<p class="mb-2">ID: {{ slotProps.data.profile._id }}</p>
 								<div class="flex gap-x-2 mb-2">
 									<span>Аватар</span>
 									<Avatar

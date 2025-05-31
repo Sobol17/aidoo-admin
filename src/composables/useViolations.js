@@ -1,6 +1,5 @@
 import { createViolation, deleteViolation, getViolations, updateViolation } from '@/api/violations'
 import { useProfileStore } from '@/stores/profile'
-import { formatDate } from '@/utils/formatDate'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed } from 'vue'
 
@@ -59,8 +58,8 @@ export function useViolations(search, page, limit) {
 						images: violation.images,
 						typePunishment: getTypePunishmentText(violation.type_punishment),
 						hours: getHoursDifference(violation.created_at, violation.date_to),
-						createdAt: formatDate(violation.created_at),
-						dateTo: formatDate(violation.date_to),
+						createdAt: violation.created_at,
+						dateTo: violation.date_to,
 					})),
 				}
 			}

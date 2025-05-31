@@ -201,6 +201,7 @@ const handleSearch = debounce(event => {
 				:loading="isLoadingCities"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -216,11 +217,11 @@ const handleSearch = debounce(event => {
 					</div>
 				</template>
 
-				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
 				<Column field="name" header="Название города" sortable style="min-width: 12rem"></Column>
 				<Column field="status" header="Статус" sortable style="min-width: 8rem"></Column>
 				<Column field="lat" header="Широта" sortable style="min-width: 10rem"></Column>
 				<Column field="lon" header="Долгота" sortable style="min-width: 10rem"></Column>
+				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
 				<Column :exportable="false" style="min-width: 12rem">
 					<template #body="slotProps">
 						<Button

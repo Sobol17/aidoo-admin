@@ -471,6 +471,7 @@ const sendModerationData = () => {
 				:loading="isContentLoading"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -618,7 +619,7 @@ const sendModerationData = () => {
 							</div>
 						</div>
 						<h5>Информация о пользователе</h5>
-						<DataTable :value="[slotProps.data.profile]">
+						<DataTable :value="[slotProps.data.profile]" removableSort>
 							<Column field="_id" header="ID" style="min-width: 8rem" sortable></Column>
 							<Column field="profile_type" header="Роль" style="min-width: 6rem" sortable>
 								<template #body="slotProps">

@@ -186,6 +186,7 @@ const sendModerationData = () => {
 				:loading="isLoadingProfiles"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -218,7 +219,7 @@ const sendModerationData = () => {
 					</template>
 				</Column>
 				<Column
-					field="subcategoryId"
+					field="subcategoryName"
 					header="Подкатегория"
 					sortable
 					style="min-width: 12rem"

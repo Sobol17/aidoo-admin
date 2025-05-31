@@ -87,6 +87,7 @@ const handleSearch = debounce(event => {
 				:currentPageReportTemplate="`{first} до {last} из ${subs.count} элементов`"
 				:loading="isLoadingReviews"
 				@page="handleChangePage"
+				removableSort
 				@update:rows="handleChangeLimit"
 			>
 				<template #header>
@@ -126,7 +127,7 @@ const handleSearch = debounce(event => {
 				<template #expansion="slotProps">
 					<div class="p-4">
 						<h5>История</h5>
-						<DataTable :value="slotProps.data.history">
+						<DataTable :value="slotProps.data.history" removableSort>
 							<Column field="action" header="Действие" style="min-width: 8rem" sortable>
 								<template #body="slotProps">
 									<span>{{ actionOptions(slotProps.data.action) }}</span>

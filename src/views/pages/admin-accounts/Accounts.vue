@@ -20,7 +20,21 @@ const page = ref(1)
 const first = ref(0)
 const limit = ref(7)
 
-const { data: accountsData, isLoading, error } = useAccounts(search, page, limit)
+const selectedAccountStatus = ref({ name: 'Все', code: 'all' })
+
+const statusOptions = ref([
+	{ name: 'Все', code: 'all' },
+	{ name: 'Администратор', code: 'admin' },
+	{ name: 'Модератор', code: 'moderator' },
+	{ name: 'Оператор поддержки', code: 'supporter' },
+	{ name: 'Сотрудник', code: 'employee' },
+])
+
+const {
+	data: accountsData,
+	isLoading,
+	error,
+} = useAccounts(search, page, limit, selectedAccountStatus)
 
 const accounts = computed(() => {
 	return accountsData?.value || []
@@ -232,16 +246,26 @@ const handleSearch = debounce(event => {
 				:loading="isLoading"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
 						<h4 class="m-0">Сотрудники</h4>
-						<IconField>
-							<InputIcon>
-								<i class="pi pi-search" />
-							</InputIcon>
-							<InputText @input="handleSearch" placeholder="Поиск" />
-						</IconField>
+						<div class="flex items-center gap-x-2">
+							<Select
+								v-model="selectedAccountStatus"
+								:options="statusOptions"
+								optionLabel="name"
+								placeholder="Активность"
+								class="w-full"
+							/>
+							<IconField>
+								<InputIcon>
+									<i class="pi pi-search" />
+								</InputIcon>
+								<InputText @input="handleSearch" placeholder="Поиск" />
+							</IconField>
+						</div>
 					</div>
 				</template>
 

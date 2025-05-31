@@ -9,11 +9,6 @@ import { computed, ref } from 'vue'
 
 const profileStore = useProfileStore()
 
-const cityStatus = [
-	{ name: 'Активен', code: 'actived' },
-	{ name: 'Неактивен', code: 'inactive' },
-]
-
 const search = ref('')
 const page = ref(1)
 const first = ref(0)
@@ -203,6 +198,7 @@ const handleSearch = debounce(event => {
 				:loading="isLoadingCities"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
+				removableSort
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
@@ -221,6 +217,13 @@ const handleSearch = debounce(event => {
 				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
 				<Column field="question" header="Вопрос" sortable style="min-width: 12rem"></Column>
 				<Column field="answer" header="Ответ" sortable style="min-width: 8rem"></Column>
+				<Column
+					field="creatorName"
+					header="Имя создателя"
+					sortable
+					style="min-width: 8rem"
+				></Column>
+				<Column field="creatorId" header="ID создателя" sortable style="min-width: 8rem"></Column>
 				<Column field="createdAt" header="Дата создания" sortable style="min-width: 10rem"></Column>
 				<Column
 					field="updatedAt"
