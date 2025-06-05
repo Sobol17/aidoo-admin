@@ -29,12 +29,18 @@ const model = ref([
 				to: '/subscriptions',
 				roles: ['admin'],
 			},
-			// {
-			// 	label: 'Тарифы',
-			// 	icon: 'pi pi-fw pi-dollar',
-			// 	to: '/taxes',
-			// 	roles: ['admin'],
-			// },
+			{
+				label: 'Тарифы',
+				icon: 'pi pi-fw pi-dollar',
+				to: '/taxes',
+				roles: ['admin'],
+			},
+			{
+				label: 'Продвижения',
+				icon: 'pi pi-fw pi-arrow-up',
+				to: '/promotions',
+				roles: ['admin'],
+			},
 			{
 				label: 'Оформить нарушения',
 				icon: 'pi pi-fw pi-ban',
@@ -93,7 +99,7 @@ const model = ref([
 			{
 				label: 'Промокоды',
 				icon: 'pi pi-fw pi-percentage',
-				to: '/promo',
+				to: '/promocodes',
 				roles: ['admin', 'moderator'],
 			},
 			{

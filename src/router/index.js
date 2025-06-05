@@ -20,13 +20,14 @@ import OfferView from '@/views/pages/offers/OfferView.vue'
 import Orders from '@/views/pages/orders/Orders.vue'
 import Profile from '@/views/pages/Profile.vue'
 import Promocodes from '@/views/pages/promo/Promocodes.vue'
+import PromotionsTable from '@/views/pages/promotions/PromotionsTable.vue'
 import Reviews from '@/views/pages/reviews/Reviews.vue'
 import Categories from '@/views/pages/subcategories/Caregories.vue'
 import Subcategories from '@/views/pages/subcategories/Subcategories.vue'
 import Subcategory from '@/views/pages/subcategories/Subcategory.vue'
 import Subs from '@/views/pages/subs/Subs.vue'
 import Support from '@/views/pages/support/Support.vue'
-import TaxTable from '@/views/pages/taxes/TaxTable.vue'
+import TariffsTable from '@/views/pages/tariffs/TariffsTable.vue'
 import AccountsUser from '@/views/pages/user-accounts/AccountsUser.vue'
 import UserProfiles from '@/views/pages/user-profiles/UserProfiles.vue'
 import ViolationsTable from '@/views/pages/violations/ViolationsTable.vue'
@@ -59,7 +60,7 @@ const router = createRouter({
 					path: '/taxes',
 					name: 'taxes',
 					meta: { roles: ['admin'] },
-					component: TaxTable,
+					component: TariffsTable,
 				},
 				{
 					path: '/admin-accounts',
@@ -128,10 +129,16 @@ const router = createRouter({
 					component: Orders,
 				},
 				{
-					path: '/promo',
+					path: '/promocodes',
 					name: 'promo',
 					meta: { roles: ['admin', 'moderator', 'support'] },
 					component: Promocodes,
+				},
+				{
+					path: '/promotions',
+					name: 'promotions',
+					meta: { roles: ['admin', 'moderator'] },
+					component: PromotionsTable,
 				},
 				{
 					path: '/support',

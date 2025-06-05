@@ -6,13 +6,14 @@ import {
 	useDeleteAdminProfile,
 	useUpdateAdminProfile,
 } from '@/composables/useAdminProfiles'
+import { useCities } from '@/composables/useCities'
 import { useUploadFile } from '@/composables/useFiles'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
 import { FilterMatchMode } from '@primevue/core/api'
 import { Button } from 'primevue'
 import { useToast } from 'primevue/usetoast'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const profileStore = useProfileStore()
@@ -176,7 +177,7 @@ function saveNewProfile() {
 			avatar_id: newProfile.value.avatar,
 			first_name: newProfile.value.firstName,
 			last_name: newProfile.value.lastName,
-			city: newProfile.value.city,
+			city: selectedCity.value,
 		})
 	}
 }
@@ -296,6 +297,47 @@ function handleChangeLimit(newLimit) {
 const handleSearch = debounce(event => {
 	search.value = event.target.value
 }, 500)
+
+const selectedCity = ref(null)
+const citySearch = ref('')
+const cityPage = ref(1)
+const cityLimit = ref(20)
+
+const { data: cityData, isLoading: isLoadingUserAccounts } = useCities(
+	citySearch,
+	cityPage,
+	cityLimit
+)
+
+const cityList = ref([])
+
+const citiesTotalPages = computed(() => {
+	return Math.ceil(cityData.value?.count / cityLimit.value)
+})
+
+watch(cityData, newData => {
+	const newItems = newData?.items || []
+	const transformed = newItems.map(city => ({
+		name: city.name,
+		lat: city.lat,
+		lon: city.lon,
+	}))
+
+	cityList.value.push(...transformed)
+})
+
+const onLazyLoadCities = () => {
+	if (citiesTotalPages.value <= cityPage.value) return
+
+	cityPage.value++
+}
+
+const citySelectScrollOptions = ref({
+	lazy: true,
+	onLazyLoad: onLazyLoadCities,
+	itemSize: 38,
+	delay: 400,
+})
 </script>
 
 <template>
@@ -496,13 +538,14 @@ const handleSearch = debounce(event => {
 				</div>
 				<div>
 					<label for="city" class="block font-bold mb-3">Город</label>
-					<InputText
-						id="city"
-						v-model.trim="newProfile.city"
-						required="true"
-						autofocus
-						:invalid="submitted && !newProfile.city"
-						fluid
+					<Select
+						v-model="selectedCity"
+						:options="cityList"
+						optionLabel="name"
+						placeholder="Выберите город из списка"
+						filter
+						class="w-full"
+						:virtualScrollerOptions="citySelectScrollOptions"
 					/>
 					<small v-if="submitted && !newProfile.city" class="text-red-500">Обязательное поле</small>
 				</div>

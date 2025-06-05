@@ -1,9 +1,14 @@
 <script setup>
-import { useCreateFaq, useDeleteFaq, useFaq, useUpdateFaq } from '@/composables/useFaq'
+import {
+	useCreateTariff,
+	useDeleteTariff,
+	useTariffs,
+	useUpdateTariff,
+} from '@/composables/useTariffs'
 import { useProfileStore } from '@/stores/profile'
 import { debounce } from '@/utils/debounce'
 import { FilterMatchMode } from '@primevue/core/api'
-import { InputText, Textarea } from 'primevue'
+import { InputText } from 'primevue'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref } from 'vue'
 
@@ -17,10 +22,10 @@ const limit = ref(7)
 const deleteCityDialog = ref(false)
 const cityDialog = ref(false)
 
-const { data: faqData, isLoading: isLoadingCities } = useFaq(search, page, limit)
+const { data: tariffsData, isLoading: isLoadingCities } = useTariffs(search, page, limit)
 
-const faqList = computed(() => {
-	return faqData?.value || []
+const tariffsList = computed(() => {
+	return tariffsData?.value || []
 })
 
 const toast = useToast()
@@ -31,14 +36,14 @@ const filters = ref({
 	global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
 
-const newFaq = ref({})
+const newTariff = ref({})
 
-const { mutate: createFaq, isPending: creatingCity } = useCreateFaq({
+const { mutate: createTariff, isPending: creatingTariff } = useCreateTariff({
 	onSuccess: () => {
 		toast.add({
 			severity: 'success',
 			summary: 'Успех',
-			detail: 'Город успешно добавлен',
+			detail: 'Тариф успешно добавлен',
 			life: 3000,
 		})
 		hideDialog()
@@ -47,18 +52,18 @@ const { mutate: createFaq, isPending: creatingCity } = useCreateFaq({
 		toast.add({
 			severity: 'error',
 			summary: 'Ошибка',
-			detail: 'Город уже существует',
+			detail: 'Ошибка при добавлении тарифа',
 			life: 3000,
 		})
 	},
 })
 
-const { mutate: updateFaq, isPending: updatingCity } = useUpdateFaq({
+const { mutate: updateTariff, isPending: updatingCity } = useUpdateTariff({
 	onSuccess: () => {
 		toast.add({
 			severity: 'success',
 			summary: 'Успех',
-			detail: 'Информация о городе обновлена',
+			detail: 'Информация о тарифе обновлена',
 			life: 3000,
 		})
 		hideDialog()
@@ -76,18 +81,20 @@ const { mutate: updateFaq, isPending: updatingCity } = useUpdateFaq({
 function saveNewCity() {
 	submitted.value = true
 	if (isEdit.value) {
-		updateFaq({
-			id: newFaq.value.id,
-			faq: {
-				question: newFaq.value.question,
-				answer: newFaq.value.answer,
+		updateTariff({
+			id: newTariff.value.id,
+			tariff: {
+				name: newTariff.value.name,
+				price: newTariff.value.price,
+				duration: newTariff.value.duration,
 				profile_id: profileStore.profileID,
 			},
 		})
 	} else {
-		createFaq({
-			question: newFaq.value.question,
-			answer: newFaq.value.answer,
+		createTariff({
+			name: newTariff.value.name,
+			price: newTariff.value.price,
+			duration: newTariff.value.duration,
 			profile_id: profileStore.profileID,
 		})
 	}
@@ -96,7 +103,7 @@ function saveNewCity() {
 const submitted = ref(false)
 
 function openNew() {
-	newFaq.value = {}
+	newTariff.value = {}
 	submitted.value = false
 	cityDialog.value = true
 }
@@ -110,13 +117,13 @@ function hideDialog() {
 
 function editCity(item) {
 	isEdit.value = true
-	newFaq.value = {
+	newTariff.value = {
 		...item,
 	}
 	cityDialog.value = true
 }
 
-const { mutate: deleteFaq, isPending: isDeletingCity } = useDeleteFaq({
+const { mutate: deleteTariff, isPending: isDeletingCity } = useDeleteTariff({
 	onSuccess: () => {
 		toast.add({
 			severity: 'success',
@@ -137,17 +144,20 @@ const { mutate: deleteFaq, isPending: isDeletingCity } = useDeleteFaq({
 })
 
 function handleDeleteDialog() {
-	deleteFaq(newFaq.value.id)
+	deleteTariff(newTariff.value.id)
 	hideDialog()
 }
 
-function confirmDeleteCity(item) {
-	newFaq.value.id = item.id
-	newFaq.value.question = item.question
+function confirmDeleteTariff(item) {
+	newTariff.value.id = item.id
 	deleteCityDialog.value = true
 }
 
 const expandedRows = ref([])
+
+// function exportCSV() {
+// 	dt.value.exportCSV()
+// }
 
 function handleChangePage(event) {
 	page.value = event.page + 1
@@ -180,17 +190,17 @@ const handleSearch = debounce(event => {
 			<DataTable
 				v-model:expandedRows="expandedRows"
 				ref="dt"
-				:value="faqList.items"
+				:value="tariffsList.items"
 				stripedRows
 				dataKey="id"
 				:paginator="true"
 				:rows="limit"
-				:total-records="faqList.count"
+				:total-records="tariffsList.count"
 				:lazy="true"
 				:filters="filters"
 				paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
 				:rowsPerPageOptions="[7, 10, 25]"
-				:currentPageReportTemplate="`{first} до {last} из ${faqList.count} элементов`"
+				:currentPageReportTemplate="`{first} до {last} из ${tariffsList.count} элементов`"
 				:loading="isLoadingCities"
 				@page="handleChangePage"
 				@update:rows="handleChangeLimit"
@@ -198,7 +208,7 @@ const handleSearch = debounce(event => {
 			>
 				<template #header>
 					<div class="flex flex-wrap gap-2 items-center justify-between">
-						<h4 class="m-0">FAQ - вопросы и ответы</h4>
+						<h4 class="m-0">Управление тарифами</h4>
 						<div class="flex gap-x-2">
 							<IconField>
 								<InputIcon>
@@ -210,19 +220,14 @@ const handleSearch = debounce(event => {
 					</div>
 				</template>
 
-				<Column expander style="width: 5rem" />
-
-				<Column field="id" header="ID" sortable style="min-width: 12rem"></Column>
-				<Column field="question" header="Вопрос" sortable style="min-width: 12rem">
-					<template #body="slotProps">
-						<span class="text-ellipsis line-clamp-2">{{ slotProps.data.question }}</span>
-					</template>
-				</Column>
-				<Column field="answer" header="Ответ" sortable style="min-width: 8rem">
-					<template #body="slotProps">
-						<span class="text-ellipsis line-clamp-2">{{ slotProps.data.answer }}</span>
-					</template>
-				</Column>
+				<Column field="name" header="Название" sortable style="min-width: 12rem"></Column>
+				<Column field="price" header="Цена" sortable style="min-width: 12rem"></Column>
+				<Column
+					field="duration"
+					header="Длительность (в месяцах)"
+					sortable
+					style="min-width: 8rem"
+				></Column>
 				<Column
 					field="creatorName"
 					header="Имя создателя"
@@ -251,21 +256,10 @@ const handleSearch = debounce(event => {
 							outlined
 							rounded
 							severity="danger"
-							@click="confirmDeleteCity(slotProps.data)"
+							@click="confirmDeleteTariff(slotProps.data)"
 						/>
 					</template>
 				</Column>
-				<template #expansion="slotProps">
-					<div class="p-4">
-						<h5>Детальная информация</h5>
-						<div class="mt-4">
-							<p class="mb-2 font-bold">Вопрос:</p>
-							<p class="mb-2">{{ slotProps.data.question }}</p>
-							<p class="mb-2 font-bold">Ответ:</p>
-							<p class="mb-2">{{ slotProps.data.answer }}</p>
-						</div>
-					</div>
-				</template>
 				<template #empty>
 					<div class="flex items-center justify-center">
 						<div class="text-gray-500 text-lg py-8">Нет данных для отображения</div>
@@ -275,43 +269,57 @@ const handleSearch = debounce(event => {
 		</div>
 
 		<!-- Диалог для редактирования профиля -->
-		<Dialog v-model:visible="cityDialog" :style="{ width: '450px' }" header="FAQ" :modal="true">
+		<Dialog v-model:visible="cityDialog" :style="{ width: '450px' }" header="Тариф	" :modal="true">
 			<div class="flex flex-col gap-6">
 				<div v-if="isEdit">
 					<label for="name" class="block font-bold mb-3">ID</label>
 					<InputText
 						id="name"
-						v-model.trim="newFaq.id"
+						v-model.trim="newTariff.id"
 						required="true"
 						autofocus
-						:invalid="submitted && !newFaq.id"
+						:invalid="submitted && !newTariff.id"
 						fluid
 						disabled
 					/>
 				</div>
 				<div>
-					<label for="name" class="block font-bold mb-3">Вопрос</label>
-					<Textarea
+					<label for="name" class="block font-bold mb-3">Название</label>
+					<InputText
 						id="name"
-						v-model.trim="newFaq.question"
+						v-model.trim="newTariff.name"
 						required="true"
 						autofocus
-						:invalid="submitted && !newFaq.question"
+						:invalid="submitted && !newTariff.name"
 						fluid
 					/>
-					<small v-if="submitted && !newFaq.question" class="text-red-500">Обязательное поле</small>
+					<small v-if="submitted && !newTariff.name" class="text-red-500">Обязательное поле</small>
 				</div>
 				<div>
-					<label for="name" class="block font-bold mb-3">Ответ</label>
-					<Textarea
+					<label for="name" class="block font-bold mb-3">Цена (число в рублях)</label>
+					<InputNumber
 						id="name"
-						v-model.trim="newFaq.answer"
+						v-model.trim="newTariff.price"
 						required="true"
 						autofocus
-						:invalid="submitted && !newFaq.answer"
+						:invalid="submitted && !newTariff.price"
 						fluid
 					/>
-					<small v-if="submitted && !newFaq.answer" class="text-red-500">Обязательное поле</small>
+					<small v-if="submitted && !newTariff.price" class="text-red-500">Обязательное поле</small>
+				</div>
+				<div>
+					<label for="name" class="block font-bold mb-3">Длительность (кол-во месяцев)</label>
+					<InputNumber
+						id="name"
+						v-model.trim="newTariff.duration"
+						required="true"
+						autofocus
+						:invalid="submitted && !newTariff.duration"
+						fluid
+					/>
+					<small v-if="submitted && !newTariff.duration" class="text-red-500"
+						>Обязательное поле</small
+					>
 				</div>
 			</div>
 
@@ -321,13 +329,13 @@ const handleSearch = debounce(event => {
 					icon="pi pi-times"
 					text
 					@click="hideDialog"
-					:loading="updatingCity || creatingCity"
+					:loading="updatingCity || creatingTariff"
 				/>
 				<Button
 					label="Сохранить"
 					icon="pi pi-check"
 					@click="saveNewCity"
-					:loading="updatingCity || creatingCity"
+					:loading="updatingCity || creatingTariff"
 				/>
 			</template>
 		</Dialog>
@@ -340,7 +348,7 @@ const handleSearch = debounce(event => {
 		>
 			<div class="flex items-center gap-4">
 				<i class="pi pi-exclamation-triangle !text-3xl" />
-				Вы уверены, что хотите удалить Вопрос {{ newFaq.question }}?
+				Вы уверены, что хотите удалить тариф {{ newTariff.name }}?
 			</div>
 			<template #footer>
 				<Button label="Нет" icon="pi pi-times" text @click="deleteCityDialog = false" />

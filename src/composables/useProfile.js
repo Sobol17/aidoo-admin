@@ -22,7 +22,7 @@ export function useProfile(status = 'all', page = 1, limit = 10) {
 					profileType: profile.profile_type,
 					accountId: profile.account_id,
 					phone: profile.phone?.toString() || '',
-					city: profile.city || '',
+					city: profile.city?.name || '',
 					status: profile.status || '',
 					createdAt: profile.created_at,
 					updatedAt: profile.updated_at,
